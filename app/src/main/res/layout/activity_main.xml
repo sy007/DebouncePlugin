@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ll_rootView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/btn_click_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="匿名内部类点击事件Hook" />
+
+    <Button
+        android:id="@+id/btn_click_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lambda点击事件Hook(non-instance-capturing lambdas)" />
+
+    <Button
+        android:id="@+id/btn_click_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lambda点击事件Hook(instance-capturing lambdas)" />
+
+    <Button
+        android:id="@+id/btn_click_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="implementsView.OnClickListener点击事件Hook" />
+
+    <Button
+        android:id="@+id/btn_click_5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="内部类点击事件Hook" />
+
+    <Button
+        android:id="@+id/btn_click_6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="静态内部类点击事件Hook" />
+
+    <Button
+        android:id="@+id/btn_click_7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="事件回调" />
+
+
+    <Button
+        android:id="@+id/btn_jump_to_list_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="跳转到ListViewActivity" />
+</LinearLayout>

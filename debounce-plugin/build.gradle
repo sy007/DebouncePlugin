@@ -1,0 +1,22 @@
+apply plugin: 'kotlin'
+apply from: '../upload_plugin_bintray.gradle'
+repositories {
+    google()
+    jcenter()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+dependencies {
+    //使用项目中指定的gradle wrapper版本，插件中使用的Project对象等等就来自这里
+    implementation gradleApi()
+    //使用本地的groovy
+    implementation localGroovy()
+    implementation 'org.ow2.asm:asm:6.0'
+    implementation 'org.ow2.asm:asm-util:6.0'
+    implementation 'org.ow2.asm:asm-commons:6.0'
+    implementation "com.android.tools.build:gradle:3.5.0"
+    implementation "com.android.tools.build:gradle-api:3.5.0"
+}

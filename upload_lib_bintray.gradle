@@ -1,0 +1,75 @@
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+Properties config = new Properties()
+config.load(project.file("debounce-lib.properties").newDataInputStream())
+def version_name = config.getProperty('version_name')
+def group_id = config.getProperty('group_id')
+def project_name = config.getProperty('project_name')
+def project_description = config.getProperty('project_description')
+def developer_name = config.getProperty('developer_name')
+def developer_email = config.getProperty('developer_email')
+//项目的版本控制地址
+def git_url = config.getProperty('git_url')
+//项目主页
+def site_url = config.getProperty('site_url')
+//以下是需要针对项目需要修改的配置内容
+def siteUrl = site_url
+// Git仓库的url
+def gitUrl = git_url
+//发布者的组织名称
+group = group_id
+//版本号，下次更新是只需要更改版本号即可
+version = version_name
+
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+                name project_name //项目名称
+                description project_description// 可选，项目描述。
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id developer_name
+                        name developer_name
+                        email developer_email
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        //Bintray中Repository的名字
+        repo = "Gradle-Plugin"
+        //发布到JCenter上的项目名字，必须填写
+        name = project_name
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+}

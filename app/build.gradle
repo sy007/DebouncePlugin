@@ -1,0 +1,68 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'debounce-plugin'
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        applicationId "com.example.gradleplugin"
+        minSdkVersion 19
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+debounce {
+    //debug为true时会有日志输出
+    isDebug = true
+    //两次点击相隔超过多长时间就认定为非抖动
+    debounceCheckTime = 1000
+    //类似于.gitignore 编写规则
+    //排除哪些目录或文件的插桩
+    excludes = ["com/example/gradleplugin/excludes/*"]
+    /**
+     * 需要插桩的方法信息，只有声明在methodEntities中的方法信息才会被插桩。
+     * 注意:插件中默认注册了onClick(Landroid/view/View;)V方法信息，
+     * 所以如果只是处理View的OnClickListener点击抖动，不需要声明methodEntities并添加方法信息。
+     * 这里以ListView#onItemClick为例子;当然你可以添加其他类型点击事件，比如ExpandableListView子条目点击事件。
+     */
+    methodEntities {
+        onItemClick {//随便填写，在methodEntities只要唯一,就像你在写productFlavors
+            methodName 'onItemClick'//方法名称
+            methodDesc '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V'//方法描述
+            interfaceName 'android/widget/AdapterView\$OnItemClickListener' //事件方法所在的接口名
+        }
+    }
+}
+
+
+dependencies {
+    implementation project(":debounce-lib")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
