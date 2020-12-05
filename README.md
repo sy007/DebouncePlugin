@@ -128,7 +128,7 @@ debounce {
 
 Demo运行起来后，点击页面上的按钮如图所示:
 
-![](http://m.qpic.cn/psc?/V51CSwpO1slVFI402aSY2YlJCy2S2DcR/TmEUgtj9EK6.7V8ajmQrENwO0OadvJR9vCme0YQ.NpGJ*VJFmcwR7laCrXuNggZJqV95TQeUdlcx5wvLW6cF7afdHKxmsPfgUGReM6n8Lzw!/b&bo=0QRFAtEERQIDGTw!&rf=viewer_4)
+![](https://github.com/sy007/DebouncePlugin/blob/main/screenshot/click_screen_shot.png?raw=true)
 
 ## 5.注意事项
 
