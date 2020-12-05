@@ -1,1 +1,1 @@
-include ':app', ':debounce-lib', ':debounce-plugin'
+include ':app', ':debounce-lib'
