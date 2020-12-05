@@ -36,6 +36,12 @@ buildscript {
 2. 在app module中依赖如下：
 
 ```groovy
+apply plugin: 'com.android.application'
+//应用插件
+apply plugin: 'debounce-plugin'
+android{
+   ... 
+}
 dependencies {
     //插件所需的依赖库
     implementation 'com.sunyuan:debounce-lib:0.1.0'
