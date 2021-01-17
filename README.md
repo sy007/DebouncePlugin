@@ -40,7 +40,7 @@ apply plugin: 'com.android.application'
 //应用插件
 apply plugin: 'debounce-plugin'
 android{
-   ... 
+   ...
 }
 dependencies {
     //插件所需的依赖库
@@ -125,10 +125,9 @@ debounce {
 ║className:com.example.gradleplugin.MainActivity
 ╟───────────────────────────────────────────────────────────────────────────────────────────────────
 ║methods:
-║	<init>()V
-║	onClick(Landroid/view/View;)V
-║	lambda$onCreate$1(Landroid/view/View;)V
-║	lambda$onCreate$0(Landroid/view/View;)V
+║  onClick(Landroid/view/View;)V
+║  lambda$onCreate$1(Landroid/view/View;)V
+║  lambda$onCreate$0(Landroid/view/View;)V
 ╚═══════════════════════════════════════════════════════════════════════════════════════════════════
 ```
 
@@ -159,3 +158,17 @@ debounce {
 
 查看路径：app\build\intermediates\transforms\DebounceTransform\xxx
 
+## 6.更新日志
+
+### 0.2.0
+
+1. 修复自定义View中运行时点击按钮出现闪退问题
+
+ - 针对子类重写父类的方法时,子类和父类中都插入判断代码
+ - 构造函数中创建检测工具类延迟到点击方法被调用时
+
+2. 调整日志打印
+
+### 0.1.0
+
+项目初始化

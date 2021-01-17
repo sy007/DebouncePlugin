@@ -1,5 +1,6 @@
 package com.sunyuan.debounce.lib;
 
+import android.annotation.SuppressLint;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -46,7 +47,8 @@ public class DebounceCheck {
     public boolean isShake() {
         boolean isShake = SystemClock.elapsedRealtime() - lastClickTime < sCheckTime;
         if (sDebug) {
-            Log.d("DebounceCheck", "checkTime:" + sCheckTime + ",isShake->" + isShake);
+            String suffix = "[checkTime:" + sCheckTime + ",isShake:" + isShake + "]";
+            Log.d("DebounceCheck", generateTag(suffix));
         }
         if (isShake) {
             return true;
@@ -54,5 +56,16 @@ public class DebounceCheck {
             lastClickTime = SystemClock.elapsedRealtime();
             return false;
         }
+    }
+
+    @SuppressLint("DefaultLocale")
+    private static String generateTag(String suffix) {
+        StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[4];
+        String callerClazzName = stackTraceElement.getClassName();
+        callerClazzName = callerClazzName.substring(callerClazzName.lastIndexOf(".") + 1);
+        String tag = "%s.%s(L:%d)";
+        tag = String.format(tag, new Object[]{callerClazzName, stackTraceElement.getMethodName(), Integer.valueOf(stackTraceElement.getLineNumber())});
+        tag = tag + ":" + suffix;
+        return tag;
     }
 }

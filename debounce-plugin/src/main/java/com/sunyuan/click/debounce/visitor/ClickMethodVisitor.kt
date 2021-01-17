@@ -19,6 +19,43 @@ class ClickMethodVisitor(
 
     override fun onMethodEnter() {
         super.onMethodEnter()
+        /**
+         * if($$debounceCheck==null){
+         *   $$debounceCheck = new DebounceCheck();
+         * }
+         */
+        mv.visitVarInsn(Opcodes.ALOAD, 0)
+        mv.visitFieldInsn(
+            Opcodes.GETFIELD,
+            owner,
+            ConfigUtil.sFieldName,
+            ConfigUtil.sFieldDesc
+        )
+        val label1 = Label()
+        mv.visitJumpInsn(Opcodes.IFNONNULL, label1)
+        mv.visitVarInsn(Opcodes.ALOAD, 0)
+        mv.visitTypeInsn(Opcodes.NEW, ConfigUtil.sOwner)
+        mv.visitInsn(Opcodes.DUP)
+        mv.visitMethodInsn(
+            Opcodes.INVOKESPECIAL,
+            ConfigUtil.sOwner,
+            ConfigUtil.sInitName,
+            ConfigUtil.sInitDesc,
+            false
+        )
+        mv.visitFieldInsn(
+            Opcodes.PUTFIELD,
+            owner,
+            ConfigUtil.sFieldName,
+            ConfigUtil.sFieldDesc
+        )
+        mv.visitLabel(label1)
+
+        /**
+         * if($$debounceCheck.isShake){
+         *     return;
+         * }
+         */
         mv.visitVarInsn(Opcodes.ALOAD, 0)
         mv.visitFieldInsn(
             Opcodes.GETFIELD,
@@ -33,10 +70,9 @@ class ClickMethodVisitor(
             ConfigUtil.sMethodDesc,
             false
         )
-        val label = Label()
-        mv.visitJumpInsn(Opcodes.IFEQ, label)
+        val label2 = Label()
+        mv.visitJumpInsn(Opcodes.IFEQ, label2)
         mv.visitInsn(Opcodes.RETURN)
-        mv.visitLabel(label)
+        mv.visitLabel(label2)
     }
-
 }

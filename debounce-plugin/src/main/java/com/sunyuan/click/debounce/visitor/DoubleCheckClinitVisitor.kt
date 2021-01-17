@@ -1,7 +1,6 @@
 package com.sunyuan.click.debounce.visitor
 
 import com.sunyuan.click.debounce.utils.ConfigUtil
-import com.sunyuan.click.debounce.utils.LogUtil
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 

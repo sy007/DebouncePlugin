@@ -2,9 +2,7 @@ package com.sunyuan.click.debounce.visitor
 
 import com.sunyuan.click.debounce.entity.LambdaMethodEntity
 import com.sunyuan.click.debounce.entity.MethodEntity
-import com.sunyuan.click.debounce.utils.ConfigUtil
-import com.sunyuan.click.debounce.utils.LogUtil
-import com.sunyuan.click.debounce.utils.MethodUtil
+import com.sunyuan.click.debounce.utils.*
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
@@ -18,11 +16,8 @@ import org.objectweb.asm.Opcodes
 class ClickClassVisitor(cv: ClassVisitor) :
     ClassVisitor(Opcodes.ASM6, cv) {
 
-    private var mInterfaces: Array<out String>? = null
     private var mOwner: String? = null
-    private var mIsVisitField = false
     private var mFindInjectClassName = false
-    private var mVisitInit = false
 
     //hook info collect
     private var mCollectClassName: String? = null
@@ -49,25 +44,24 @@ class ClickClassVisitor(cv: ClassVisitor) :
         if (name == ConfigUtil.sOwner) {
             mFindInjectClassName = true
         }
-        val matchNormalClickMethod = isMatchNormalClickMethod(interfaces);
-        val lambdaMethodEntityList = MethodUtil.sLambdaMethods[name]
-        if (!lambdaMethodEntityList.isNullOrEmpty() || matchNormalClickMethod) {
-            mOwner = name
-        }
-        if (isVisitField(lambdaMethodEntityList, matchNormalClickMethod)) {
-            mIsVisitField = true
-            if (matchNormalClickMethod) {
-                mInterfaces = interfaces
-            }
-            //为当前类创建属性
-            val visitField = cv.visitField(
-                Opcodes.ACC_PRIVATE or Opcodes.ACC_FINAL,
-                ConfigUtil.sFieldName,
-                ConfigUtil.sFieldDesc,
-                null,
-                null
+        val collectDefaultMethods = MethodUtil.sCollectDefaultMethods[name]
+        val lambdaMethodEntityList = MethodUtil.sCollectLambdaMethods[name]
+        if (!CollectionUtil.isEmpty(collectDefaultMethods) || !CollectionUtil.isEmpty(
+                lambdaMethodEntityList
             )
-            visitField.visitEnd()
+        ) {
+            mOwner = name
+            if (isVisitField(collectDefaultMethods, lambdaMethodEntityList)) {
+                //为当前类创建属性
+                val visitField = cv.visitField(
+                    Opcodes.ACC_PRIVATE,
+                    ConfigUtil.sFieldName,
+                    ConfigUtil.sFieldDesc,
+                    null,
+                    null
+                )
+                visitField.visitEnd()
+            }
         }
         if (ConfigUtil.sDebug && (mFindInjectClassName || mOwner != null)) {
             mCollectClassName = "className:${name.replace("/", ".")}"
@@ -76,32 +70,18 @@ class ClickClassVisitor(cv: ClassVisitor) :
     }
 
     private fun isVisitField(
-        lambdaMethodEntityList: List<LambdaMethodEntity>?,
-        matchNormalClickMethod: Boolean
+        collectDefaultMethods: Map<String, MethodEntity>?,
+        lambdaMethods: Map<String, LambdaMethodEntity>?
     ): Boolean {
-        return matchNormalClickMethod || kotlin.run {
-            lambdaMethodEntityList?.forEach {
-                if (it.tag == Opcodes.H_INVOKESPECIAL) {
+        return !CollectionUtil.isEmpty(collectDefaultMethods) || kotlin.run {
+            lambdaMethods?.forEach {
+                if (it.value.tag == Opcodes.H_INVOKESPECIAL) {
                     return@run true
                 }
             }
             return@run false
         }
     }
-
-    private fun isMatchNormalClickMethod(interfaces: Array<out String>?): Boolean {
-        if (!interfaces.isNullOrEmpty()) {
-            val iterator = MethodUtil.sNormalMethods.iterator()
-            while (iterator.hasNext()) {
-                val methodEntity: MethodEntity? = iterator.next().value
-                if (methodEntity != null && interfaces.contains(methodEntity.interfaceName)) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
 
     override fun visitMethod(
         access: Int,
@@ -121,20 +101,11 @@ class ClickClassVisitor(cv: ClassVisitor) :
             )
         }
         val owner = mOwner ?: return super.visitMethod(access, name, desc, signature, exceptions)
-        if (mIsVisitField && !mVisitInit && name == "<init>") {
-            mVisitInit = true
-            mCollectMethod?.add(name + desc)
-            val methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-            return InitVisitor(
-                owner,
-                methodVisitor
-            )
-        }
         //处理需要Hook的Lambda方法
-        val lambdaMethodEntityList = MethodUtil.sLambdaMethods[owner]
+        val lambdaMethodEntityList = MethodUtil.sCollectLambdaMethods[owner]
         lambdaMethodEntityList?.forEach {
-            if (it != null && name == it.methodName && desc == it.methodDesc) {
-                return when (it.tag) {
+            if (name == it.value.methodName && desc == it.value.methodDesc) {
+                return when (it.value.tag) {
                     Opcodes.H_INVOKESTATIC -> {
                         //non-instance-capturing lambdas
                         mCollectMethod?.add(name + desc)
@@ -164,7 +135,7 @@ class ClickClassVisitor(cv: ClassVisitor) :
                         LogUtil.warning(
                             String.format(
                                 "An unknown '%s' lambda was captured in '%s'.",
-                                it.methodName + it.methodDesc,
+                                it.value.methodName + it.value.methodDesc,
                                 owner
                             )
                         )
@@ -174,12 +145,12 @@ class ClickClassVisitor(cv: ClassVisitor) :
             }
         }
         //处理其他需要Hook的方法
-        val interfaces = mInterfaces
-        if (interfaces.isNullOrEmpty()) {
+        val collectDefaultMethods = MethodUtil.sCollectDefaultMethods[mOwner]
+        if (CollectionUtil.isEmpty(collectDefaultMethods)) {
             return super.visitMethod(access, name, desc, signature, exceptions)
         }
-        val methodEntity: MethodEntity? = MethodUtil.sNormalMethods[name + desc]
-        if (methodEntity != null && interfaces.contains(methodEntity.interfaceName)) {
+        val methodEntity = collectDefaultMethods!![name + desc]
+        if (methodEntity != null) {
             mCollectMethod?.add(name + desc)
             val methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
             return ClickMethodVisitor(

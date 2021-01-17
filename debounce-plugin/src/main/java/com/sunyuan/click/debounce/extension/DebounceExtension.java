@@ -4,7 +4,6 @@ import com.sunyuan.click.debounce.entity.MethodEntity;
 import com.sunyuan.click.debounce.utils.CollectionUtil;
 import com.sunyuan.click.debounce.utils.ConfigUtil;
 import com.sunyuan.click.debounce.utils.LogUtil;
-import com.sunyuan.click.debounce.utils.MethodUtil;
 import com.sunyuan.click.debounce.utils.StringUtil;
 
 import org.gradle.api.Action;
@@ -65,7 +64,11 @@ public class DebounceExtension {
             if (StringUtil.isEmpty(methodEntity.getInterfaceName())) {
                 throw new IllegalArgumentException(String.format(methodEntityEx, "methodEntities", "interfaceName", identification));
             }
-            MethodUtil.sNormalMethods.put(methodEntity.getMethodName() + methodEntity.getMethodDesc(), methodEntity);
+            ConfigUtil.sConfigHookMethods.put(methodEntity.getMethodName() + methodEntity.getMethodDesc(), methodEntity);
+        });
+        ConfigUtil.sConfigHookMethods.forEach((methodName, methodEntity) -> {
+            String interfaceName = methodEntity.getInterfaceName();
+            ConfigUtil.sInterfaceSet.add(interfaceName);
         });
         toPathMatchers(excludes, excludedPathMatcher);
     }

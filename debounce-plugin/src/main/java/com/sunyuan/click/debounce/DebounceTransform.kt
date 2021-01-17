@@ -1,14 +1,11 @@
 package com.sunyuan.click.debounce
 
-import LambdaMethodMappingVisitor
+import CollectNeedHookMethodInformationVisitor
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
 import com.sunyuan.click.debounce.extension.DebounceExtension
-import com.sunyuan.click.debounce.utils.ClassUtil
-import com.sunyuan.click.debounce.utils.ConfigUtil
-import com.sunyuan.click.debounce.utils.JarUtil
-import com.sunyuan.click.debounce.utils.LogUtil
+import com.sunyuan.click.debounce.utils.*
 import com.sunyuan.click.debounce.visitor.ClickClassVisitor
 import org.apache.commons.codec.digest.DigestUtils
 import org.gradle.api.Project
@@ -16,6 +13,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
 import java.io.IOException
+import java.net.URLClassLoader
 
 
 /**
@@ -26,15 +24,16 @@ import java.io.IOException
  */
 private const val TRANSFORM_NAME = "DebounceTransform"
 
-open class DebounceTransform(target: Project) : Transform() {
+open class DebounceTransform(private val project: Project) : Transform() {
     private lateinit var mContext: Context
     private lateinit var mDebounceExtension: DebounceExtension
+    private val mSpecifiedInterfaceImplChecked = SpecifiedInterfaceImplChecked()
 
     init {
-        LogUtil.sLogger = target.logger
-        target.afterEvaluate {
+        LogUtil.sLogger = project.logger
+        project.afterEvaluate {
             val debounceExtension: DebounceExtension =
-                target.extensions.findByName(EXTENSION_NAME) as DebounceExtension
+                project.extensions.findByName(EXTENSION_NAME) as DebounceExtension
             ConfigUtil.sDebug = debounceExtension.isDebug
             ConfigUtil.sDebounceCheckTime = debounceExtension.debounceCheckTime
             debounceExtension.init()
@@ -73,6 +72,9 @@ open class DebounceTransform(target: Project) : Transform() {
             //如果不支持增量更新。
             outputProvider.deleteAll()
         }
+        val urlClassLoader: URLClassLoader =
+            ClassLoaderHelper.getClassLoader(inputs, transformInvocation.referencedInputs, project)
+        mSpecifiedInterfaceImplChecked.setUrlClassLoader(urlClassLoader)
         inputs.forEach { transformInput ->
             transformInput.jarInputs.forEach { jarInput ->
                 val inputJar = jarInput.file
@@ -191,9 +193,10 @@ open class DebounceTransform(target: Project) : Transform() {
     fun modifyClass(srcClass: ByteArray): ByteArray? {
         val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
         val cv = ClickClassVisitor(cw)
-        val lambdaMethodMapping = LambdaMethodMappingVisitor(cv)
+        val needHookMethodInformationVisitor =
+            CollectNeedHookMethodInformationVisitor(cv, mSpecifiedInterfaceImplChecked)
         val cr = ClassReader(srcClass)
-        cr.accept(lambdaMethodMapping, ClassReader.EXPAND_FRAMES)
+        cr.accept(needHookMethodInformationVisitor, ClassReader.EXPAND_FRAMES)
         return cw.toByteArray()
     }
 }

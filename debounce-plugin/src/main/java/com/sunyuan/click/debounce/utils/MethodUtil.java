@@ -5,8 +5,10 @@ import com.sunyuan.click.debounce.entity.LambdaMethodEntity;
 import com.sunyuan.click.debounce.entity.MethodEntity;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * author : Sy007
@@ -15,15 +17,19 @@ import java.util.Map;
  * version: 1.0
  */
 public class MethodUtil {
-    public static final Map<String, MethodEntity> sNormalMethods = new HashMap<>();
 
-    //key为 className,value为Lambda方法集合信息，需要注意的是LambdaMethodEntity#interfaceName 为null
-    public static final Map<String, List<LambdaMethodEntity>> sLambdaMethods = new HashMap<>();
+    /**
+     * 收集需要插桩的方法信息
+     * key:className
+     * value:key为methodName+methodDes,value为方法信息，需要注意的是MethodEntity#interfaceName为null
+     */
+    public static final Map<String, Map<String, MethodEntity>> sCollectDefaultMethods = new HashMap<>();
 
-    static {
-        sNormalMethods.put("onClick(Landroid/view/View;)V", new MethodEntity(
-                "onClick",
-                "(Landroid/view/View;)V",
-                "android/view/View$OnClickListener"));
-    }
+    /**
+     * 收集需要插桩的Lambda方法信息
+     * key:className
+     * value:key为Lambda方法所在的className,value为Lambda方法信息,需要注意的是LambdaMethodEntity#interfaceName为null
+     */
+    public static final Map<String, Map<String, LambdaMethodEntity>> sCollectLambdaMethods = new HashMap<>();
+
 }

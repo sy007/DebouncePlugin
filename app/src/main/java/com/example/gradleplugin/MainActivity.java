@@ -2,13 +2,11 @@ package com.example.gradleplugin;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    public static final String TAG = MainActivity.class.getSimpleName();
     private int instanceField = 5;
 
     @Override
@@ -24,7 +22,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_click_2).setOnClickListener(v -> LogUtil.d("Lambda点击事件(non-instance-capturing lambdas)"));
         findViewById(R.id.btn_click_3).setOnClickListener(v -> LogUtil.d("Lambda点击事件(instance-capturing lambdas)" + instanceField));
         findViewById(R.id.btn_click_4).setOnClickListener(this);
-        findViewById(R.id.btn_click_5).setOnClickListener(new InnearClickListener());
+        InnearClickListener innearClickListener = new InnearClickListener();
+        findViewById(R.id.btn_click_5).setOnClickListener(innearClickListener);
         findViewById(R.id.btn_click_6).setOnClickListener(new InnearStaticClickListener());
         Task.init(findViewById(R.id.ll_rootView), new View.OnClickListener() {
             @Override

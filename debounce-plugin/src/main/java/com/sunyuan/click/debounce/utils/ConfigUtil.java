@@ -1,5 +1,12 @@
 package com.sunyuan.click.debounce.utils;
 
+import com.sunyuan.click.debounce.entity.MethodEntity;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * author : Sy007
  * date   : 2020/11/29
@@ -7,6 +14,24 @@ package com.sunyuan.click.debounce.utils;
  * version: 1.0
  */
 public class ConfigUtil {
+    /**
+     * 配置插桩的方法信息
+     */
+    public static final Map<String, MethodEntity> sConfigHookMethods = new HashMap<>();
+
+    /**
+     * 用于判断当前扫描的类是否是插桩接口的直接或间接子类
+     */
+    public static final Set<String> sInterfaceSet = new HashSet<>();
+
+    static {
+        sConfigHookMethods.put("onClick(Landroid/view/View;)V", new MethodEntity(
+                "onClick",
+                "(Landroid/view/View;)V",
+                "android/view/View$OnClickListener"));
+    }
+
+
     //其他实例方法插入的字节码
     public static final String sOwner = "com/sunyuan/debounce/lib/DebounceCheck";
     public static final String sInitName = "<init>";

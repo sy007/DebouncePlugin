@@ -51,6 +51,24 @@
         android:text="事件回调" />
 
 
+    <com.example.gradleplugin.widget.CustomViewImpl
+        android:id="@+id/custom_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@color/purple_200"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="自定义View"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+    </com.example.gradleplugin.widget.CustomViewImpl>
+
     <Button
         android:id="@+id/btn_jump_to_list_view"
         android:layout_width="wrap_content"
