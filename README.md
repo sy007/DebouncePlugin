@@ -28,7 +28,7 @@ buildscript {
     }
     dependencies {
         //依赖插件所需的环境
-        classpath 'com.sunyuan:debounce-plugin:0.1.2'
+        classpath 'com.sunyuan:debounce-plugin:0.2.0'
     }
 }
 ```
@@ -44,7 +44,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'com.sunyuan:debounce-lib:0.1.0'
+    implementation 'com.sunyuan:debounce-lib:0.2.0'
 }
 ```
 
