@@ -133,7 +133,7 @@ debounce {
 
 Demo运行起来后，点击页面上的按钮如图所示:
 
-![](https://github.com/sy007/DebouncePlugin/blob/main/screenshot/click_screen_shot.png?raw=true)
+![](http://r.photo.store.qq.com/psc?/V11vVsP84HfNn2/TmEUgtj9EK6.7V8ajmQrEHwzT8YotqNEgu1N5WPDip2LMqoM8Xipg9urk.bEAikWjUywEFmUdVdl.lDhqM3vvsyRsDBp769M6AevZxBzOtk!/r)
 
 ## 5.注意事项
 
