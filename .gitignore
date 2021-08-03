@@ -7,5 +7,4 @@
 .cxx
 *.idea
 */build
-buildSrc/
 gradle/
