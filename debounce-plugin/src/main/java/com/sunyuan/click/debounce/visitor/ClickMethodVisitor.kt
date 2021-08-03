@@ -15,7 +15,7 @@ import org.objectweb.asm.commons.AdviceAdapter
 class ClickMethodVisitor(
     private val owner: String,
     mv: MethodVisitor, access: Int, name: String, desc: String
-) : AdviceAdapter(Opcodes.ASM6, mv, access, name, desc) {
+) : AdviceAdapter(Opcodes.ASM7, mv, access, name, desc) {
 
     override fun onMethodEnter() {
         super.onMethodEnter()

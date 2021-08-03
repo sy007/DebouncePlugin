@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes
 
 class DoubleCheckClinitVisitor(
     private val isDebug: Boolean, private val checkTime: Long, mv: MethodVisitor
-) : MethodVisitor(Opcodes.ASM6, mv) {
+) : MethodVisitor(Opcodes.ASM7, mv) {
     override fun visitInsn(opcode: Int) {
         if (opcode == Opcodes.RETURN) {
             val debugInsn = if (isDebug) {

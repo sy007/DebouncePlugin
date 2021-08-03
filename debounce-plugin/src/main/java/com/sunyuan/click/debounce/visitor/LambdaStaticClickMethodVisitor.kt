@@ -13,7 +13,7 @@ import org.objectweb.asm.commons.AdviceAdapter
  *    version: 1.0
  */
 class LambdaStaticClickMethodVisitor(mv: MethodVisitor, access: Int, name: String, desc: String) :
-    AdviceAdapter(Opcodes.ASM6, mv, access, name, desc) {
+    AdviceAdapter(Opcodes.ASM7, mv, access, name, desc) {
     override fun onMethodEnter() {
         super.onMethodEnter()
         mv.visitFieldInsn(

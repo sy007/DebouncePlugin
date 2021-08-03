@@ -14,9 +14,9 @@ dependencies {
     implementation gradleApi()
     //使用本地的groovy
     implementation localGroovy()
-    implementation 'org.ow2.asm:asm:6.0'
-    implementation 'org.ow2.asm:asm-util:6.0'
-    implementation 'org.ow2.asm:asm-commons:6.0'
+    implementation 'org.ow2.asm:asm:7.3.1'
+    implementation 'org.ow2.asm:asm-util:7.3.1'
+    implementation 'org.ow2.asm:asm-commons:7.3.1'
     implementation "com.android.tools.build:gradle:3.5.0"
     implementation "com.android.tools.build:gradle-api:3.5.0"
 }

@@ -22,7 +22,7 @@ import java.util.function.Consumer
 class CollectNeedHookMethodInformationVisitor(
     private val classVisitor: ClassVisitor,
     private val specifiedInterfaceImplChecked: SpecifiedInterfaceImplChecked
-) : ClassNode(Opcodes.ASM6) {
+) : ClassNode(Opcodes.ASM7) {
     private val collectImplInterfaces = mutableSetOf<String>()
     override fun visitEnd() {
         super.visitEnd()

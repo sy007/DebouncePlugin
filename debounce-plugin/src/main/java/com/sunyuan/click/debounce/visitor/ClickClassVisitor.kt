@@ -14,7 +14,7 @@ import org.objectweb.asm.Opcodes
  * version: 1.0
  */
 class ClickClassVisitor(cv: ClassVisitor) :
-    ClassVisitor(Opcodes.ASM6, cv) {
+    ClassVisitor(Opcodes.ASM7, cv) {
 
     private var mOwner: String? = null
     private var mFindInjectClassName = false
