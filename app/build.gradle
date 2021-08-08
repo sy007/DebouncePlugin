@@ -56,8 +56,6 @@ debounce {
 
 
 dependencies {
-//    implementation project(":debounce-lib")
-    implementation 'com.sunyuan:debounce-lib:0.2.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.3.2'
     implementation 'androidx.appcompat:appcompat:1.2.0'
@@ -67,4 +65,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'cn.jzvd:jiaozivideoplayer:7.6.0'
+    implementation 'io.github.sy007:debounce-lib:0.2.0'
 }

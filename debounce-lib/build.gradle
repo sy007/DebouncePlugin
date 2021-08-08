@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply from: '../upload_lib_bintray.gradle'
+apply from: '../upload_lib.gradle'
 android {
     compileSdkVersion 29
 
