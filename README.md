@@ -28,7 +28,14 @@ buildscript {
     }
     dependencies {
         //依赖插件所需的环境
-        classpath 'com.sunyuan:debounce-plugin:0.2.0'
+        classpath 'io.github.sy007:debounce-plugin:0.3.0'
+    }
+}
+
+allprojects {
+    repositories {
+        //添加mavenCentral仓库
+        mavenCentral()
     }
 }
 ```
@@ -44,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'com.sunyuan:debounce-lib:0.2.0'
+    implementation 'io.github.sy007:debounce-lib:0.2.0'
 }
 ```
 
@@ -159,6 +166,10 @@ debounce {
 查看路径：app\build\intermediates\transforms\DebounceTransform\xxx
 
 ## 6.更新日志
+
+### 0.3.0
+
+升级`debounce-plugin`依赖的ASM版本到7.3.1版本
 
 ### 0.2.0
 
