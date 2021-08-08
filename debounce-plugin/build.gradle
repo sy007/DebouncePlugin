@@ -1,5 +1,5 @@
 apply plugin: 'kotlin'
-apply from: '../upload_plugin_bintray.gradle'
+apply from: '../upload_plugin.gradle'
 repositories {
     google()
     jcenter()
