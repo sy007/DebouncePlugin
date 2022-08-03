@@ -2,6 +2,7 @@ package com.sunyuan.click.debounce
 
 import CollectNeedHookMethodInformationVisitor
 import com.android.build.api.transform.*
+import com.android.build.api.variant.VariantInfo
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
 import com.sunyuan.click.debounce.extension.DebounceExtension
@@ -29,13 +30,14 @@ open class DebounceTransform(private val project: Project) : Transform() {
     private lateinit var mDebounceExtension: DebounceExtension
     private val mSpecifiedInterfaceImplChecked = SpecifiedInterfaceImplChecked()
 
+
     init {
-        LogUtil.sLogger = project.logger
         project.afterEvaluate {
             val debounceExtension: DebounceExtension =
                 project.extensions.findByName(EXTENSION_NAME) as DebounceExtension
             ConfigUtil.sDebug = debounceExtension.isDebug
             ConfigUtil.sDebounceCheckTime = debounceExtension.debounceCheckTime
+            LogUtil.sLogger = project.logger
             debounceExtension.init()
             debounceExtension.printlnConfigInfo()
             mDebounceExtension = debounceExtension
@@ -58,7 +60,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
     }
 
     override fun getScopes(): MutableSet<in QualifiedContent.Scope> {
-        return TransformManager.SCOPE_FULL_PROJECT;
+        return TransformManager.SCOPE_FULL_PROJECT
     }
 
     override fun transform(transformInvocation: TransformInvocation?) {

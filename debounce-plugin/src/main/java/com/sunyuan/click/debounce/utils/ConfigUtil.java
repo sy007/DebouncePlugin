@@ -38,7 +38,7 @@ public class ConfigUtil {
     public static final String sInitDesc = "()V";
     public static final String sFieldName = "$$debounceCheck";
     public static final String sFieldDesc = "Lcom/sunyuan/debounce/lib/DebounceCheck;";
-    public static final String sMethodName = "isShake";
+    public static final String sMethodName = "isDebounce";
     public static final String sMethodDesc = "()Z";
 
     //静态Lambda方法插入的字节码

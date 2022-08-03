@@ -44,13 +44,13 @@ public class DebounceCheck {
     /**
      * 判断是否是快速点击
      */
-    public boolean isShake() {
-        boolean isShake = SystemClock.elapsedRealtime() - lastClickTime < sCheckTime;
+    public boolean isDebounce() {
+        boolean isDebounce = SystemClock.elapsedRealtime() - lastClickTime < sCheckTime;
         if (sDebug) {
-            String suffix = "[checkTime:" + sCheckTime + ",isShake:" + isShake + "]";
+            String suffix = "[checkTime:" + sCheckTime + ",isDebounce:" + isDebounce + "]";
             Log.d("DebounceCheck", generateTag(suffix));
         }
-        if (isShake) {
+        if (isDebounce) {
             return true;
         } else {
             lastClickTime = SystemClock.elapsedRealtime();
