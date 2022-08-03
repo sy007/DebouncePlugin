@@ -165,7 +165,7 @@ debounce {
 
 查看路径：app\build\intermediates\transforms\DebounceTransform\xxx
 
-### 5.2 关于插件功能
+### 5.2 关闭插件功能
 
 在工程的`gradle.properties`中配置
 
