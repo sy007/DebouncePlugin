@@ -28,7 +28,7 @@ buildscript {
     }
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:0.3.0'
+        classpath 'io.github.sy007:debounce-plugin:0.4.1'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:0.2.0'
+    implementation 'io.github.sy007:debounce-lib:0.4.1'
 }
 ```
 
@@ -144,7 +144,7 @@ Demo运行起来后，点击页面上的按钮如图所示:
 
 ## 5.注意事项
 
-凡是修改以下结点的任何信息，都需要Build->clean Project，然后在运行项目。否则新修改的配置不会生效。
+### 5.1 凡是修改以下结点的任何信息，都需要Build->clean Project，然后在运行项目。否则新修改的配置不会生效。
 
 ```groovy
 debounce {
@@ -165,7 +165,28 @@ debounce {
 
 查看路径：app\build\intermediates\transforms\DebounceTransform\xxx
 
+### 5.2 关于插件功能
+
+在工程的`gradle.properties`中配置
+
+```properties
+#关闭防抖动插件
+debounceEnable=false
+```
+
+同步gradle,日志输出:
+
+```
+debounce function is off!
+```
+
+说明插件功能已关闭
+
 ## 6.更新日志
+
+### 0.4.1
+
+新增`gradle.properties`配置属性`debounceEnable`是否关闭插件功能
 
 ### 0.3.0
 
