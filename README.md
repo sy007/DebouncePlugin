@@ -6,8 +6,8 @@ Android点击事件防抖动插件，主要为了解决项目以及第三方库�
 
 1. 支持Java,Kotlin点击事件防抖
 2. 支持Java,Kotlin Lambda点击事件防抖
-3. 支持排除或需要指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
-4. 支持排除或需要指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
+3. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
+4. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
 5. 支持配置点击事件间隔，即指定时间内，只允许触发一次点击事件
 6. 支持多种类型的点击事件处理。例如：
    - ListView#onItemClick
@@ -87,26 +87,26 @@ debounce {
 
 3. generateReport：是否生成方法修改报告，即插件修改的方法会生成一份html报告，报告路径:app/build/reports/debounce-plugin/${buildType}/modified-method-list.html
 
-4. includes： 需要指定路径下的代码事件防抖(文件级白名单),类似于.gitignore 编写规则
+4. includes： 处理指定路径下的代码事件防抖(文件级白名单),类似于.gitignore 编写规则
 
 5. excludes：排除指定路径下的代码事件防抖(文件级黑名单),类似于.gitignore 编写规则
 
-6. includeForMethodAnnotation: 方法级白名单,声明在方法上的这些注解都会防抖。**注意:这里配置的是注解的字节码**
+6. includeForMethodAnnotation: 方法级白名单, 方法上声明了这些注解，那么该方法会插入防抖代码。**注意:这里给includeForMethodAnnotation配置的是注解的字节码**
 
-   - 比如处理ButterKnife的OnClick和OnItemClick事件。
+   - 比如处理ButterKnife的OnClick和OnItemClick事件，方法上凡是声明了OnClick或OnItemClick注解都会插入防抖代码
 
    ```groovy
    includeForMethodAnnotation = ["Lbutterknife/OnClick;",
                                      "Lbutterknife/OnItemClick;"]
    ```
 
-   - 插件内部默认配置了`ClickDeBounce`注解,即声明在方法上的`ClickDeBounce`注解，都会防抖
+   - 插件内部默认添加了`ClickDeBounce`注解,即方法上声明了`ClickDeBounce`注解，都会插入防抖代码
 
      ```kotlin
       includeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/ClickDeBounce;")
      ```
 
-7. excludeForMethodAnnotation：方法级别黑名单,声明在方法上的这些注解都不会防抖,插件内部默认配置了` IgnoreClickDeBounce`注解，即声明在方法上的`IgnoreClickDeBounce`注解，都不会防抖。**注意:这里配置的是注解的字节码**
+7. excludeForMethodAnnotation：方法级别黑名单,方法上声明了这些注解，那么该方法不会插入防抖代码。插件内部默认添加了` IgnoreClickDeBounce`注解，即声明在方法上的`IgnoreClickDeBounce`注解，都不会插入防抖代码。**注意:这里配置的是注解的字节码**
 
    ```kotlin
    excludeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/IgnoreClickDeBounce;")
@@ -114,7 +114,7 @@ debounce {
 
 8. methodEntities :  需要防抖的事件信息，即想要处理哪些事件防抖。除了**includeForMethodAnnotation**方法级别白名单外，代码中只有匹配methodEntities声明的事件信息才会防抖。
 
-   **注意:插件中默认添加了`View.OnClickListener#onClick`事件信息，所以如果只是处理View的OnClickListener事件防抖，不需要声明methodEntities并添加事件信息。**
+   **注意:插件中默认添加了`View.OnClickListener#onClick`事件信息，所以如果只是处理View的OnClickListener事件防抖，不需要声明methodEntities和添加事件信息。**
 
    假如我们想处理`ListView#onItemClick`事件防抖，那么只在methodEntities声明`ListView#onItemClick`事件信息即可。当然你还可以添加其他类型事件信息。
 
@@ -199,7 +199,7 @@ Demo运行起来后，点击页面上的按钮如图所示:
 
 插件提供`include`，`exclude`，`includeForMethodAnnotation`和`excludeForMethodAnnotation` 主要解决事件防抖个性化的场景，不是每个app都需要全局处理事件防抖。
 
-于是有了`include`和`exclude`用于需要或排除文件级别的事件防抖。那还有一种场景是某个方法不需要防抖，于是插件提供了,`includeForMethodAnnotation`和`excludeForMethodAnnotation`用于处理或排除方法级别的防抖。
+于是有了`include`和`exclude`用于处理或排除文件级别的事件防抖。那还有一种场景是某个方法不需要防抖，于是插件提供了,`includeForMethodAnnotation`和`excludeForMethodAnnotation`用于处理或排除方法级别的防抖。
 
 #### 5.1.2 优先级
 
@@ -329,7 +329,7 @@ public void reflectOnClick(View view) {
 }
 ```
 
-### 5.8 如何对某个事件方法不防抖？
+### 5.8 如何排除某个事件方法防抖处理？
 
 在不需要防抖的事件方法上声明`@IgnoreClickDeBounce`注解
 
