@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:0.4.1'
+        classpath 'io.github.sy007:debounce-plugin:1.0.0'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:0.4.1'
+    implementation 'io.github.sy007:debounce-lib:1.0.0'
 }
 ```
 
@@ -70,7 +70,7 @@ debounce {
     excludes = ["$填写不需要事件防抖的目录或文件"]
     includeForMethodAnnotation = ["$填写需要事件防抖的方法上注解信息"]
     excludeForMethodAnnotation = ["$填写不需要事件防抖的方法上注解信息"]
-  	//需要事件防抖的方法信息
+  	//需要防抖的事件信息
     methodEntities {
         xxxx {//随便填写，在methodEntities只要唯一,就像你在写productFlavors
             methodName 'xxx'//方法名称
