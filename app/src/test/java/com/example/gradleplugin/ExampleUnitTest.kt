@@ -17,40 +17,37 @@ class ExampleUnitTest {
 
     @Test
     fun classLoaderTest() {
-
-
-
-    }
-
-
-    private fun ptintln(cls: Class<*>) {
-        println("canonicalName:" + cls.canonicalName)
-        println("name:" + cls.name)
-        println("simpleName:" + cls.simpleName)
-        println("typeName:" + cls.typeName)
-
-        println("isInterface:" + cls.isInterface)
-        println("superclass:" + cls.superclass)
     }
 
     @Test
     fun addition_isCorrect() {
-        val matcher: PathMatcher = FileSystems.getDefault()
+        var matcher: PathMatcher = FileSystems.getDefault()
             .getPathMatcher("glob:com/example/gradleplugin/MainActivity*.class")
+//        Assert.assertEquals(
+//            true, matcher.matches(File("com/example/gradleplugin/MainActivity.class").toPath())
+//        )
+//        Assert.assertEquals(
+//            true, matcher.matches(File("com/example/gradleplugin/MainActivity1.class").toPath())
+//        )
+//        //AssertionError
+//        Assert.assertEquals(
+//            false,
+//            matcher.matches(File("com/example/gradleplugin/Main.class").toPath())
+//        )
+//        名称只能由字母、数字、下划线、$符号组成
+
+
+//        classPath:com/example/gradleplugin/MainActivity_ViewBinding$1.class
+//        classPath:com/example/gradleplugin/ListViewActivity_ViewBinding.class
+        matcher = FileSystems.getDefault()
+            .getPathMatcher("glob:**/*__ViewBinding*.class")
         Assert.assertEquals(
-            true, matcher.matches(File("com/example/gradleplugin/MainActivity.class").toPath())
-        )
-        Assert.assertEquals(
-            true, matcher.matches(File("com/example/gradleplugin/MainActivity$0.class").toPath())
+            true,
+            matcher.matches(File("com/example/gradleplugin/MainActivity__ViewBinding$1.class").toPath())
         )
         Assert.assertEquals(
             true,
-            matcher.matches(File("com/example/gradleplugin/MainActivity\$InnearClickListener.class").toPath())
-        )
-        //AssertionError
-        Assert.assertEquals(
-            true,
-            matcher.matches(File("com/example/gradleplugin/Main.class").toPath())
+            matcher.matches(File("com/example/gradleplugin/ListViewActivity__ViewBinding.class").toPath())
         )
     }
 

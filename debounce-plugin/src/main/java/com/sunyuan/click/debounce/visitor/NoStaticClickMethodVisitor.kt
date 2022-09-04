@@ -12,7 +12,7 @@ import org.objectweb.asm.commons.AdviceAdapter
  * desc   :
  * version: 1.0
  */
-class ClickMethodVisitor(
+class NoStaticClickMethodVisitor(
     private val owner: String,
     mv: MethodVisitor, access: Int, name: String, desc: String
 ) : AdviceAdapter(Opcodes.ASM7, mv, access, name, desc) {
@@ -20,8 +20,8 @@ class ClickMethodVisitor(
     override fun onMethodEnter() {
         super.onMethodEnter()
         /**
-         * if($$debounceCheck==null){
-         *   $$debounceCheck = new DebounceCheck();
+         * if($$bounceChecker==null){
+         *   $$bounceChecker = new BounceChecker();
          * }
          */
         mv.visitVarInsn(Opcodes.ALOAD, 0)
@@ -52,8 +52,8 @@ class ClickMethodVisitor(
         mv.visitLabel(label1)
 
         /**
-         * if($$debounceCheck.isShake){
-         *     return;
+         * if($$bounceChecker.check()){
+         *    return;
          * }
          */
         mv.visitVarInsn(Opcodes.ALOAD, 0)

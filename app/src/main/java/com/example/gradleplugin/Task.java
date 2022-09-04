@@ -5,7 +5,7 @@ import android.view.View;
 public class Task {
 
     public static void init(View view, View.OnClickListener click) {
-        view.findViewById(R.id.btn_click_7).setOnClickListener(v -> {
+        view.findViewById(R.id.btn_click_9).setOnClickListener(v -> {
             if (click != null) {
                 //回调前干一些事情
                 click.onClick(v);

@@ -1,6 +1,5 @@
 package com.sunyuan.click.debounce.visitor
 
-import com.sunyuan.click.debounce.entity.LambdaMethodEntity
 import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.utils.*
 import org.objectweb.asm.ClassVisitor
@@ -19,20 +18,6 @@ class ClickClassVisitor(cv: ClassVisitor) :
     private var mOwner: String? = null
     private var mFindInjectClassName = false
 
-    //hook info collect
-    private var mCollectClassName: String? = null
-    private val mCollectField: MutableList<String>? = if (ConfigUtil.sDebug) {
-        mutableListOf()
-    } else {
-        null
-    }
-    private val mCollectMethod: MutableList<String>? = if (ConfigUtil.sDebug) {
-        mutableListOf()
-    } else {
-        null
-    }
-
-
     override fun visit(
         version: Int,
         access: Int,
@@ -44,15 +29,11 @@ class ClickClassVisitor(cv: ClassVisitor) :
         if (name == ConfigUtil.sOwner) {
             mFindInjectClassName = true
         }
-        val collectDefaultMethods = MethodUtil.sCollectDefaultMethods[name]
-        val lambdaMethodEntityList = MethodUtil.sCollectLambdaMethods[name]
-        if (!CollectionUtil.isEmpty(collectDefaultMethods) || !CollectionUtil.isEmpty(
-                lambdaMethodEntityList
-            )
-        ) {
+        val collectMethods = MethodUtil.sModifyOfMethods[name]
+        if (!collectMethods.isNullOrEmpty()) {
             mOwner = name
-            if (isVisitField(collectDefaultMethods, lambdaMethodEntityList)) {
-                //为当前类创建属性
+            if (isVisitInvokeSpecialField(collectMethods)) {
+                //为当前类创建实例属性
                 val visitField = cv.visitField(
                     Opcodes.ACC_PRIVATE,
                     ConfigUtil.sFieldName,
@@ -62,20 +43,39 @@ class ClickClassVisitor(cv: ClassVisitor) :
                 )
                 visitField.visitEnd()
             }
-        }
-        if (ConfigUtil.sDebug && (mFindInjectClassName || mOwner != null)) {
-            mCollectClassName = "className:${name.replace("/", ".")}"
+            if (isVisitInvokeStaticField(collectMethods)) {
+                //为当前类创建静态属性
+                val visitField = cv.visitField(
+                    Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC,
+                    ConfigUtil.sStaticFieldName,
+                    ConfigUtil.sFieldDesc, null, null
+                )
+                visitField.visitEnd()
+            }
         }
         super.visit(version, access, name, signature, superName, interfaces)
     }
 
-    private fun isVisitField(
-        collectDefaultMethods: Map<String, MethodEntity>?,
-        lambdaMethods: Map<String, LambdaMethodEntity>?
+
+    private fun isVisitInvokeStaticField(
+        collectMethods: Map<String, MethodEntity>
     ): Boolean {
-        return !CollectionUtil.isEmpty(collectDefaultMethods) || kotlin.run {
-            lambdaMethods?.forEach {
-                if (it.value.tag == Opcodes.H_INVOKESPECIAL) {
+        return kotlin.run {
+            collectMethods.forEach {
+                if (it.value.access == Opcodes.H_INVOKESTATIC) {
+                    return@run true
+                }
+            }
+            return@run false
+        }
+    }
+
+    private fun isVisitInvokeSpecialField(
+        collectMethods: Map<String, MethodEntity>
+    ): Boolean {
+        return kotlin.run {
+            collectMethods.forEach {
+                if (it.value.access == -1 || it.value.access == Opcodes.H_INVOKESPECIAL) {
                     return@run true
                 }
             }
@@ -91,39 +91,24 @@ class ClickClassVisitor(cv: ClassVisitor) :
         exceptions: Array<out String>?
     ): MethodVisitor {
         if (mFindInjectClassName && name == "<clinit>") {
-            mCollectField?.add("${ConfigUtil.sIsDebugFieldName} modified to ${ConfigUtil.sDebug}")
-            mCollectField?.add("${ConfigUtil.sDebounceCheckTimeFieldName} modified to ${ConfigUtil.sDebounceCheckTime}")
             val methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-            return DoubleCheckClinitVisitor(
+            return BounceCheckerClinitVisitor(
                 ConfigUtil.sDebug,
-                ConfigUtil.sDebounceCheckTime,
+                ConfigUtil.sCheckTime,
                 methodVisitor
             )
         }
         val owner = mOwner ?: return super.visitMethod(access, name, desc, signature, exceptions)
-        //处理需要Hook的Lambda方法
-        val lambdaMethodEntityList = MethodUtil.sCollectLambdaMethods[owner]
-        lambdaMethodEntityList?.forEach {
+        //处理需要修改的Lambda方法
+        val collectMethods = MethodUtil.sModifyOfMethods[owner]
+        collectMethods?.forEach {
             if (name == it.value.methodName && desc == it.value.methodDesc) {
-                return when (it.value.tag) {
+                return when (it.value.access) {
                     Opcodes.H_INVOKESTATIC -> {
                         //non-instance-capturing lambdas
-                        mCollectMethod?.add(name + desc)
                         val methodVisitor =
                             cv.visitMethod(access, name, desc, signature, exceptions)
-                        LambdaStaticClickMethodVisitor(
-                            methodVisitor,
-                            access,
-                            name,
-                            desc
-                        )
-                    }
-                    Opcodes.H_INVOKESPECIAL -> {
-                        //instance-capturing lambda
-                        mCollectMethod?.add(name + desc)
-                        val methodVisitor =
-                            cv.visitMethod(access, name, desc, signature, exceptions)
-                        ClickMethodVisitor(
+                        StaticClickMethodVisitor(
                             owner,
                             methodVisitor,
                             access,
@@ -132,41 +117,20 @@ class ClickClassVisitor(cv: ClassVisitor) :
                         )
                     }
                     else -> {
-                        LogUtil.warning(
-                            String.format(
-                                "An unknown '%s' lambda was captured in '%s'.",
-                                it.value.methodName + it.value.methodDesc,
-                                owner
-                            )
+                        //instance-capturing lambda or method of impl Interface
+                        val methodVisitor =
+                            cv.visitMethod(access, name, desc, signature, exceptions)
+                        NoStaticClickMethodVisitor(
+                            owner,
+                            methodVisitor,
+                            access,
+                            name,
+                            desc
                         )
-                        super.visitMethod(access, name, desc, signature, exceptions)
                     }
                 }
             }
         }
-        //处理其他需要Hook的方法
-        val collectDefaultMethods = MethodUtil.sCollectDefaultMethods[mOwner]
-        if (CollectionUtil.isEmpty(collectDefaultMethods)) {
-            return super.visitMethod(access, name, desc, signature, exceptions)
-        }
-        val methodEntity = collectDefaultMethods!![name + desc]
-        if (methodEntity != null) {
-            mCollectMethod?.add(name + desc)
-            val methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-            return ClickMethodVisitor(
-                owner,
-                methodVisitor,
-                access,
-                name,
-                desc
-            )
-        }
         return super.visitMethod(access, name, desc, signature, exceptions)
-    }
-
-
-    override fun visitEnd() {
-        super.visitEnd()
-        LogUtil.printlnHookInfo(mCollectClassName, mCollectField, mCollectMethod)
     }
 }

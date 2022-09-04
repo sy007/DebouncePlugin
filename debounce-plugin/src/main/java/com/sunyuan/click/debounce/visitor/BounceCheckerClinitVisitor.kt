@@ -4,7 +4,7 @@ import com.sunyuan.click.debounce.utils.ConfigUtil
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
-class DoubleCheckClinitVisitor(
+class BounceCheckerClinitVisitor(
     private val isDebug: Boolean, private val checkTime: Long, mv: MethodVisitor
 ) : MethodVisitor(Opcodes.ASM7, mv) {
     override fun visitInsn(opcode: Int) {
@@ -18,14 +18,14 @@ class DoubleCheckClinitVisitor(
             mv.visitFieldInsn(
                 Opcodes.PUTSTATIC,
                 ConfigUtil.sOwner,
-                ConfigUtil.sIsDebugFieldName,
+                ConfigUtil.sDebugFieldName,
                 "Z"
             )
             mv.visitLdcInsn(checkTime)
             mv.visitFieldInsn(
                 Opcodes.PUTSTATIC,
                 ConfigUtil.sOwner,
-                ConfigUtil.sDebounceCheckTimeFieldName,
+                ConfigUtil.sBounceCheckTimeFieldName,
                 "J"
             )
         }
