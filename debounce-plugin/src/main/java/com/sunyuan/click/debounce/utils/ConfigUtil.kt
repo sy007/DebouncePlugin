@@ -48,7 +48,7 @@ object ConfigUtil {
     var sCheckTime = 1000L
 
     init {
-        sHookMethods["onClick(Landroid/view/View;)V"] = MethodEntity().apply {
+        sHookMethods["onClick(Landroid/view/View;)V"] = MethodEntity("onClick").apply {
             methodName = "onClick"
             methodDesc = "(Landroid/view/View;)V"
             interfaceName = "android/view/View\$OnClickListener"

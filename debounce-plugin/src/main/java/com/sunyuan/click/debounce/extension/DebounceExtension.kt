@@ -4,7 +4,9 @@ import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.toPathMatchers
 import com.sunyuan.click.debounce.utils.ConfigUtil
 import com.sunyuan.click.debounce.utils.LogUtil
+import groovy.json.DefaultJsonGenerator
 import groovy.json.JsonBuilder
+import groovy.json.JsonGenerator
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import java.nio.file.FileSystems
@@ -115,10 +117,24 @@ open class DebounceExtension(project: Project) {
         configMap["excludes"] = excludes
         configMap["includeForMethodAnnotation"] = includeForMethodAnnotation
         configMap["excludeForMethodAnnotation"] = excludeForMethodAnnotation
-        configMap["methodEntities"] = methodEntities.asMap
-        val configJson = JsonBuilder(configMap).toPrettyString()
+        configMap["methodEntities"] = getPrintMethodEntities()
+        val jsonGenerator = object : DefaultJsonGenerator(JsonGenerator.Options().apply {
+            excludeNulls()
+            excludeFieldsByName("access", "name")
+        }) {}
+        val configJson = JsonBuilder(configMap, jsonGenerator).toPrettyString()
         LogUtil.warn(configJson)
         LogUtil.warn("-----------------------------------------------------------------")
+    }
+
+
+    private fun getPrintMethodEntities(): LinkedHashMap<String, MethodEntity> {
+        val printMethodEntities = linkedMapOf<String, MethodEntity>()
+        ConfigUtil.sHookMethods.forEach {
+            val key = it.value.name
+            printMethodEntities[key] = it.value
+        }
+        return printMethodEntities
     }
 }
 

@@ -25,11 +25,11 @@ class FindInterfaceImplHelper {
      * 记录结果放入collectImplInterfaces中
      */
     fun findTargetInterfaceImpl(
-        className: String,
+        className: String?,
         targetInterfaces: Set<String>,
         collectImplInterfaces: MutableSet<String>
     ) {
-        if (isObject(className) || targetInterfaces.size == collectImplInterfaces.size) {
+        if (className.isNullOrEmpty() || isObject(className) || targetInterfaces.size == collectImplInterfaces.size) {
             return
         }
         val reader = getClassReader(className) ?: return
@@ -67,7 +67,7 @@ class FindInterfaceImplHelper {
             if (inputStream != null) {
                 return ClassReader(inputStream)
             }
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         } finally {
             if (inputStream != null) {

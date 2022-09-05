@@ -148,7 +148,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
                 val outputFile = toOutputFile(outputDir, inputDir, inputFile)
                 outputFile.writeBytes(modifiedBytes)
             }
-        }.get()
+        }
     }
 
     private fun toOutputFile(outputDir: File, inputDir: File, inputFile: File): File {
@@ -176,7 +176,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
                     }
                 }
             modifiedJar.copyTo(outputJar, true)
-        }.get()
+        }
     }
 
     private fun getOutPutJar(jarInput: JarInput, outputProvider: TransformOutputProvider): File {

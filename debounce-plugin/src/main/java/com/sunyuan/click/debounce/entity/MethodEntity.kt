@@ -25,7 +25,6 @@ open class MethodEntity {
     /**
      * lambda method access flags.
      */
-    @Transient
     var access: Int = -1
 
     constructor(name: String) {

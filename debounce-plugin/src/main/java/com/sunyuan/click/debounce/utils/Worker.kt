@@ -1,5 +1,6 @@
 package com.sunyuan.click.debounce.utils
 
+import java.io.IOException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,8 +26,29 @@ class Worker {
         }
     )
 
-    fun submit(task: () -> Unit): Future<*> {
-        return executor.submit(task)
+    fun submit(task: () -> Unit) {
+        try {
+            executor.submit(task).get()
+        } catch (e: ExecutionException) {
+            e.throwRealException()
+        } catch (e: InterruptedException) {
+            e.throwRealException()
+        }
+    }
+
+    private fun Exception.throwRealException() {
+        when (cause) {
+            is IOException -> {
+                throw cause as IOException
+            }
+            is RuntimeException -> {
+                throw cause as RuntimeException
+            }
+            is Error -> {
+                throw cause as Error
+            }
+            else -> throw  RuntimeException(cause)
+        }
     }
 
     fun shutdown() {
