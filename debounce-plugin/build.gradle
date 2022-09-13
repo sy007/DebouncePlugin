@@ -1,13 +1,37 @@
 apply plugin: 'kotlin'
-apply from: '../upload_plugin.gradle'
+apply plugin: 'java-gradle-plugin'
+apply from: './upload_plugin.gradle'
+
+buildscript {
+    ext.kotlin_version = "1.3.72"
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 repositories {
+    mavenCentral()
     google()
-    jcenter()
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+
+gradlePlugin {
+    plugins {
+        version {
+            id = 'debounce-plugin'
+            implementationClass = 'com.sunyuan.click.debounce.DebouncePlugin'
+        }
+    }
+}
+
 
 dependencies {
     //使用项目中指定的gradle wrapper版本，插件中使用的Project对象等等就来自这里

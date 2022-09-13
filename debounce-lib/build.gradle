@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply from: '../upload_lib.gradle'
+apply from: './upload_lib.gradle'
 android {
     compileSdkVersion 29
 
@@ -19,7 +19,6 @@ android {
 }
 
 dependencies {
+
 }
-repositories {
-    mavenCentral()
-}
+
