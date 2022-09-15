@@ -13,8 +13,6 @@ import com.sunyuan.click.debounce.utils.LogUtil
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 /**
@@ -79,8 +77,11 @@ class DebouncePlugin : Plugin<Project> {
 
     private fun findLastClassesTransform(appExtension: AppExtension): Transform {
         return appExtension.transforms.reversed().firstOrNull {
-            it.scopes.containsAll(TransformManager.SCOPE_FULL_PROJECT)
-                    && it.inputTypes.contains(QualifiedContent.DefaultContentType.CLASSES)
+            val scopeFullProject = mutableSetOf<QualifiedContent.Scope>()
+            TransformManager.SCOPE_FULL_PROJECT.forEach { type ->
+                scopeFullProject.add(type as QualifiedContent.Scope)
+            }
+            it.scopes.containsAll(scopeFullProject) && it.inputTypes.contains(QualifiedContent.DefaultContentType.CLASSES)
         } ?: throw GradleException("No available transform")
     }
 
@@ -89,6 +90,5 @@ class DebouncePlugin : Plugin<Project> {
             dirName, "modified-method-list.html"
         )
         HtmlReport().dump(file)
-
     }
 }

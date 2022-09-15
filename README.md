@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.0.1'
+        classpath 'io.github.sy007:debounce-plugin:1.0.2'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.0.1'
+    implementation 'io.github.sy007:debounce-lib:1.0.2'
 }
 ```
 
@@ -346,6 +346,11 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+### 1.0.2
+
+1. 完善lambda表达式插桩处理
+2. 解决kotlin plugin 1.7.10版本，lambda实例方法引用插桩失败问题
 
 ### 1.0.1
 

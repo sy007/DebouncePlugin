@@ -17,5 +17,10 @@ class TestKotlinActivity : AppCompatActivity() {
             LogUtil.d("Kotlin点击事件")
         }
         findViewById<View>(R.id.btn_click_2).setOnClickListener(onClick)
+        findViewById<View>(R.id.btn_click_3).setOnClickListener(this::instanceReferenceClick)
+    }
+
+    private fun instanceReferenceClick(view: View) {
+        LogUtil.d("Kotlin Lambda方法引用")
     }
 }

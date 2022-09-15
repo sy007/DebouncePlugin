@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply from: './upload_lib.gradle'
+apply plugin: "com.vanniktech.maven.publish"
 android {
     compileSdkVersion 29
 

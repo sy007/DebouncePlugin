@@ -11,10 +11,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GradlePlugin">
-        <activity android:name=".TestKotlinActivity" />
-        <activity android:name=".ListViewActivity" />
-        <activity android:name=".excludes.ExcludeActivity" />
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".TestKotlinActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ListViewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".excludes.ExcludeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

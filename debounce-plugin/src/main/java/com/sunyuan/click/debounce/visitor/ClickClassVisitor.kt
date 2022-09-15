@@ -62,7 +62,7 @@ class ClickClassVisitor(cv: ClassVisitor) :
     ): Boolean {
         return kotlin.run {
             collectMethods.forEach {
-                if (it.value.access == Opcodes.H_INVOKESTATIC) {
+                if (it.value.access == Opcodes.H_INVOKESTATIC) { //lambda表达式未捕获外部实例->私有静态方法或静态方法引用
                     return@run true
                 }
             }
@@ -75,7 +75,12 @@ class ClickClassVisitor(cv: ClassVisitor) :
     ): Boolean {
         return kotlin.run {
             collectMethods.forEach {
-                if (it.value.access == -1 || it.value.access == Opcodes.H_INVOKESPECIAL) {
+                if (it.value.access == -1 ||
+                    it.value.access == Opcodes.H_INVOKESPECIAL || //lambda表达式捕获外部事例->私有实例方法
+                    it.value.access == Opcodes.H_NEWINVOKESPECIAL || //lambda方法引用->构造方法调用
+                    it.value.access == Opcodes.H_INVOKEVIRTUAL ||//lambda方法引用->实例方法调用｜类方法引用
+                    it.value.access == Opcodes.H_INVOKEINTERFACE //lambda方法引用->实例方法调用(多态)
+                ) {
                     return@run true
                 }
             }

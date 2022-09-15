@@ -1,22 +1,29 @@
-apply plugin: 'kotlin'
-apply plugin: 'java-gradle-plugin'
-apply from: './upload_plugin.gradle'
-
 buildscript {
-    ext.kotlin_version = "1.3.72"
+    ext.kotlin_version = "1.7.10"
     repositories {
         google()
         mavenCentral()
+        maven {
+            url("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:7.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.vanniktech:gradle-maven-publish-plugin:0.18.0'
     }
 }
+
+apply plugin: 'kotlin'
+apply plugin: 'java-gradle-plugin'
+apply plugin: "com.vanniktech.maven.publish"
 
 repositories {
     mavenCentral()
     google()
+    maven {
+        url("https://s01.oss.sonatype.org/content/repositories/snapshots")
+    }
 }
 
 tasks.withType(JavaCompile) {
@@ -32,6 +39,16 @@ gradlePlugin {
     }
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+compileKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8
+}
 
 dependencies {
     //使用项目中指定的gradle wrapper版本，插件中使用的Project对象等等就来自这里
