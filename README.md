@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.0.2'
+        classpath 'io.github.sy007:debounce-plugin:1.1.0'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.0.2'
+    implementation 'io.github.sy007:debounce-lib:1.1.0'
 }
 ```
 
@@ -277,7 +277,7 @@ public abstract class DebouncingOnClickListener implements View.OnClickListener 
 }
 ```
 
-根据`include[$主工程代码路径]`配置，所以`DebouncingOnClickListener#onClick`不会插入防抖代码，所以ButterKnife设置的点击事件不会有防抖功能
+根据`include[$主工程代码路径]`配置，所以`DebouncingOnClickListener#onClick`不会插入防抖代码，即ButterKnife设置的点击事件不会有防抖功能
 
 需要配置以下策略,以正确处理ButterKnife设置的事件防抖
 
@@ -346,6 +346,11 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+### 1.1.0
+
+1. 解决D8 warning:Expected stack map table for method with non-linear control flow
+2. transform性能提升50%（感谢booster）
 
 ### 1.0.2
 
