@@ -41,8 +41,8 @@ object ConfigUtil {
      * 这里修改的是BounceChecker#sDebug和BounceChecker#sCheckTime
      * 具体修改的值由build.gradle中配置指定
      */
-    const val sDebugFieldName = "sDebug"
-    const val sBounceCheckTimeFieldName = "sCheckTime"
+    const val sCheckTimeNameWithDes = "sCheckTimeJ"
+    const val sDebugNameWithDes = "sDebugZ"
 
     var sDebug = false
     var sCheckTime = 1000L

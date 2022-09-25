@@ -1,18 +1,16 @@
 package com.sunyuan.click.debounce
 
-import CollectNeedModifyOfMethodVisitor
+import ClickMethodVisitor
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
-import com.sunyuan.click.debounce.visitor.ClickClassVisitor
-import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
-import java.io.IOException
 import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 
@@ -28,18 +26,15 @@ private const val TRANSFORM_NAME = "DebounceTransform"
 open class DebounceTransform(private val project: Project) : Transform() {
     private val findInterfaceImplHelper = FindInterfaceImplHelper()
     private lateinit var worker: Worker
-    private lateinit var context: Context
     internal lateinit var debounceEx: DebounceExtension
 
     override fun getName(): String {
         return TRANSFORM_NAME
     }
 
-
     override fun getInputTypes(): MutableSet<QualifiedContent.ContentType> {
         return TransformManager.CONTENT_CLASS
     }
-
 
     override fun isIncremental(): Boolean {
         return true
@@ -52,7 +47,6 @@ open class DebounceTransform(private val project: Project) : Transform() {
     override fun transform(transformInvocation: TransformInvocation) {
         super.transform(transformInvocation)
         MethodUtil.sModifyOfMethods.clear()
-        context = transformInvocation.context
         val inputs = transformInvocation.inputs
         val outputProvider = transformInvocation.outputProvider
         val isIncremental = transformInvocation.isIncremental
@@ -69,56 +63,14 @@ open class DebounceTransform(private val project: Project) : Transform() {
         findInterfaceImplHelper.setUrlClassLoader(urlClassLoader)
         try {
             inputs.forEach { transformInput ->
-                transformInput.jarInputs.forEach { jarInput ->
-                    val inputJar = jarInput.file
-                    val outputJar = getOutPutJar(jarInput, outputProvider)
-                    if (isIncremental) {
-                        when (jarInput.status) {
-                            Status.ADDED, Status.CHANGED -> transformJar(inputJar, outputJar)
-                            Status.REMOVED -> FileUtils.delete(outputJar)
-                            else -> {//null or  Status.NOTCHANGED
-
-                            }
-                        }
-                    } else {
-                        transformJar(inputJar, outputJar)
+                transformInput.jarInputs.forEach { inputJar ->
+                    worker.submit {
+                        transformJar(inputJar, outputProvider, isIncremental)
                     }
                 }
-                transformInput.directoryInputs.forEach { di ->
-                    val inputDir: File = di.file
-                    val outputDir = outputProvider.getContentLocation(
-                        di.name,
-                        di.contentTypes,
-                        di.scopes,
-                        Format.DIRECTORY
-                    )
-                    if (isIncremental) {
-                        for ((inputFile, value) in di.changedFiles) {
-                            when (value) {
-                                Status.ADDED, Status.CHANGED -> {
-                                    transformSingleFile(inputFile, inputDir, outputDir)
-                                }
-                                Status.REMOVED -> {
-                                    val outputFile = toOutputFile(outputDir, inputDir, inputFile)
-                                    FileUtils.deleteIfExists(outputFile)
-                                }
-                                else -> {//null or  Status.NOTCHANGED
-
-                                }
-                            }
-                        }
-                    } else {
-                        if (inputDir.isDirectory) {
-                            inputDir.copyRecursively(outputDir, true)
-                            inputDir.walk()
-                                .maxDepth(Int.MAX_VALUE)
-                                .filter {
-                                    it.isFile
-                                }.forEach { inputFile ->
-                                    transformSingleFile(inputFile, inputDir, outputDir)
-                                }
-
-                        }
+                transformInput.directoryInputs.forEach { dirInput ->
+                    worker.submit {
+                        transformDirInput(dirInput, outputProvider, isIncremental)
                     }
                 }
             }
@@ -132,79 +84,93 @@ open class DebounceTransform(private val project: Project) : Transform() {
         LogUtil.warn("--------------------------------------------------------")
     }
 
-
-    private fun transformSingleFile(inputFile: File, inputDir: File, outputDir: File) {
-        if (!ClassUtil.checkClassName(inputFile.name)) {
-            return
-        }
-        worker.submit {
-            val classPath: String =
-                inputFile.absolutePath.replace(inputDir.absolutePath + File.separator, "")
-            var modifiedBytes: ByteArray? = null
-            if (debounceEx.matchClassPath(classPath)) {
-                modifiedBytes = modifyClass(inputFile.readBytes())
-            }
-            if (modifiedBytes != null) {
-                val outputFile = toOutputFile(outputDir, inputDir, inputFile)
-                outputFile.writeBytes(modifiedBytes)
-            }
-        }
-    }
-
-    private fun toOutputFile(outputDir: File, inputDir: File, inputFile: File): File {
-        val filePath: String = inputFile.absolutePath
-        return File(filePath.replace(inputDir.absolutePath, outputDir.absolutePath))
-    }
-
-
-    private fun transformJar(
-        inputJar: File,
-        outputJar: File
+    private fun transformDirInput(
+        dirInput: DirectoryInput,
+        outputProvider: TransformOutputProvider,
+        isIncremental: Boolean
     ) {
-        worker.submit {
-            val modifiedJar: File =
-                JarUtil.modifyJarFile(
-                    inputJar,
-                    context.temporaryDir
-                ) { classPath, sourceBytes ->
-                    //classPath->com/xxx/yyy/zzz.class
-                    val className = classPath.split("/").lastOrNull() ?: return@modifyJarFile null
-                    if (ClassUtil.checkClassName(className) && debounceEx.matchClassPath(classPath)) {
-                        return@modifyJarFile modifyClass(sourceBytes)
-                    } else {
-                        return@modifyJarFile null
+        val inputDir: File = dirInput.file
+        if (isIncremental) {
+            dirInput.changedFiles.forEach { (file, status) ->
+                when (status) {
+                    Status.REMOVED -> {
+                        outputProvider.getContentLocation(
+                            dirInput.id,
+                            dirInput.contentTypes,
+                            dirInput.scopes,
+                            Format.DIRECTORY
+                        ).parentFile.listFiles()?.asSequence()
+                            ?.filter { it.isDirectory }
+                            ?.map { File(it, dirInput.file.toURI().relativize(file.toURI()).path) }
+                            ?.filter { it.exists() }
+                            ?.forEach { it.delete() }
+                        file.delete()
+                    }
+                    Status.ADDED, Status.CHANGED -> {
+                        val outputDir = outputProvider.getContentLocation(
+                            dirInput.id,
+                            dirInput.contentTypes,
+                            dirInput.scopes,
+                            Format.DIRECTORY
+                        )
+                        val output = File(outputDir, inputDir.toURI().relativize(file.toURI()).path)
+                        file.transform(output, ::transform, inputDir)
+                    }
+                    else -> {
+
                     }
                 }
-            modifiedJar.copyTo(outputJar, true)
+                return
+            }
+        } else {
+            val outputDir = outputProvider.getContentLocation(
+                dirInput.id,
+                dirInput.contentTypes,
+                dirInput.scopes,
+                Format.DIRECTORY
+            )
+            inputDir.transform(outputDir, ::transform, inputDir)
         }
     }
 
-    private fun getOutPutJar(jarInput: JarInput, outputProvider: TransformOutputProvider): File {
-        var destName = jarInput.file.name
-        val hexName = DigestUtils.md5Hex(
-            jarInput.file.absolutePath
-        ).substring(0, 8)
-        if (destName.endsWith(".jar")) {
-            destName = destName.substring(0, destName.length - 4)
-        }
-        return outputProvider.getContentLocation(
-            destName + "_" + hexName,
-            jarInput.contentTypes,
-            jarInput.scopes,
-            Format.JAR
+    private fun transformJar(
+        inputJar: JarInput,
+        provider: TransformOutputProvider,
+        isIncremental: Boolean
+    ) {
+        val outputJar = provider.getContentLocation(
+            inputJar.id,
+            inputJar.contentTypes,
+            inputJar.scopes, Format.JAR
         )
+        if (isIncremental) {
+            when (inputJar.status) {
+                Status.ADDED, Status.CHANGED -> {
+                    inputJar.file.transform(outputJar, ::transform)
+                }
+                Status.REMOVED -> FileUtils.delete(outputJar)
+                else -> {
+
+                }
+            }
+            return
+        }
+        inputJar.file.transform(outputJar, ::transform)
     }
 
 
-    @Throws(IOException::class)
-    fun modifyClass(srcClass: ByteArray): ByteArray? {
-        val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-        val cv = ClickClassVisitor(cw)
-        val needModifyOfMethodVisitor =
-            CollectNeedModifyOfMethodVisitor(cv, debounceEx, findInterfaceImplHelper)
-        val cr = ClassReader(srcClass)
-        cr.accept(needModifyOfMethodVisitor, ClassReader.EXPAND_FRAMES)
-        return cw.toByteArray()
-    }
+    private fun transform(canonicalName: String, bytes: ByteArray): ByteArray =
+        if (debounceEx.matchClassPath(canonicalName)) {
+            val cr = ClassReader(bytes)
+            val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
+            val clickClassVisitor = ClickMethodVisitor(debounceEx, findInterfaceImplHelper)
+            cr.accept(clickClassVisitor, 0)
+            clickClassVisitor.accept(cw)
+            cw.toByteArray()
+        } else {
+            bytes
+        }
 
+    private val QualifiedContent.id: String
+        get() = md5Hex(file.absolutePath)
 }

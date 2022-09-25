@@ -1,6 +1,6 @@
 package com.sunyuan.click.debounce.utils
 
-import com.sunyuan.click.debounce.touch
+import com.didiglobal.booster.kotlinx.touch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

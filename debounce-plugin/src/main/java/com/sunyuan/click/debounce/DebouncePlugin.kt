@@ -7,9 +7,7 @@ import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.build.gradle.internal.pipeline.TransformTask
 import com.sunyuan.click.debounce.extension.DebounceExtension
-import com.sunyuan.click.debounce.utils.ConfigUtil
-import com.sunyuan.click.debounce.utils.HtmlReport
-import com.sunyuan.click.debounce.utils.LogUtil
+import com.sunyuan.click.debounce.utils.*
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project

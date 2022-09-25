@@ -1,11 +1,8 @@
 package com.sunyuan.click.debounce.utils
 
 import com.android.build.api.transform.TransformInput
-import com.android.build.gradle.AppExtension
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Iterables
-import com.sunyuan.click.debounce.getAndroidJarPath
-import org.gradle.api.Project
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URL

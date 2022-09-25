@@ -1,5 +1,6 @@
 package com.sunyuan.click.debounce.utils
 
+import com.didiglobal.booster.kotlinx.NCPU
 import java.io.IOException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -10,9 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * @description
  */
 class Worker {
-    private val cpuCount = Runtime.getRuntime().availableProcessors()
-    private val executor = ThreadPoolExecutor(
-        cpuCount, cpuCount,
+
+    private val transformExecutor = ThreadPoolExecutor(
+        NCPU, NCPU,
         0L, TimeUnit.MILLISECONDS,
         LinkedBlockingQueue(), object : ThreadFactory {
             private var threadNumber = AtomicInteger(1)
@@ -23,12 +24,12 @@ class Worker {
                     priority = Thread.NORM_PRIORITY
                 }
             }
-        }
-    )
+        }) { r, _ -> r.run() }
+
 
     fun submit(task: () -> Unit) {
         try {
-            executor.submit(task).get()
+            transformExecutor.submit(task).get()
         } catch (e: ExecutionException) {
             e.throwRealException()
         } catch (e: InterruptedException) {
@@ -52,10 +53,10 @@ class Worker {
     }
 
     fun shutdown() {
-        executor.shutdown()
+        transformExecutor.shutdown()
     }
 
     fun awaitTermination(timeout: Long, unit: TimeUnit) {
-        executor.awaitTermination(timeout, unit)
+        transformExecutor.awaitTermination(timeout, unit)
     }
 }

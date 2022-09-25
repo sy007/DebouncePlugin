@@ -1,7 +1,6 @@
 package com.sunyuan.click.debounce.extension
 
 import com.sunyuan.click.debounce.entity.MethodEntity
-import com.sunyuan.click.debounce.toPathMatchers
 import com.sunyuan.click.debounce.utils.ConfigUtil
 import com.sunyuan.click.debounce.utils.LogUtil
 import groovy.json.DefaultJsonGenerator
@@ -23,6 +22,7 @@ import java.nio.file.PathMatcher
 open class DebounceExtension(project: Project) {
 
     companion object {
+        private const val GLOB_SYNTAX = "glob:"
         private const val methodEntityEx = "In %s,the %s of %s cannot be empty."
     }
 
@@ -135,6 +135,30 @@ open class DebounceExtension(project: Project) {
             printMethodEntities[key] = it.value
         }
         return printMethodEntities
+    }
+
+    private fun Set<String>.toPathMatchers(): MutableSet<PathMatcher> {
+        val paths = this
+        val matchers = mutableSetOf<PathMatcher>()
+        if (paths.isEmpty()) {
+            return matchers
+        }
+        for (path in paths) {
+            try {
+                val fs = FileSystems.getDefault()
+                val matcher = fs.getPathMatcher(GLOB_SYNTAX + path)
+                matchers.add(matcher)
+            } catch (e: IllegalArgumentException) {
+                LogUtil.error(
+                    String.format(
+                        "Ignoring relativePath '{%s}' glob pattern.Because something unusual happened here '{%s}'",
+                        path,
+                        e
+                    )
+                )
+            }
+        }
+        return matchers
     }
 }
 
