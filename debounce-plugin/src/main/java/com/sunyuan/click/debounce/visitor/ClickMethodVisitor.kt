@@ -92,15 +92,14 @@ class ClickMethodVisitor(
             val samMethodName: String = node.name
             val bsmArgs: Array<Any> = node.bsmArgs
             //方法描述符
-            val samMethodType = bsmArgs[0] as Type
+            //val samMethodType = bsmArgs[0] as Type  有的项目会出现ClassCastException
             //脱糖后的方法，从Handle中取出该方法的信息
             val handle: Handle = bsmArgs[1] as Handle
             val hookMethodIterator = ConfigUtil.sHookMethods.iterator()
             while (hookMethodIterator.hasNext()) {
                 val methodEntity = hookMethodIterator.next().value
                 if (methodEntity.interfaceName == samBase &&
-                    methodEntity.methodName == samMethodName &&
-                    methodEntity.methodDesc == samMethodType.descriptor
+                    methodEntity.methodName == samMethodName
                 ) {
                     record(handle.owner, handle.name, handle.desc, handle.tag)
                     break
