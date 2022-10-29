@@ -33,18 +33,20 @@ import java.util.zip.ZipInputStream
  */
 fun File.transform(
     output: File,
-    transformer: (canonicalName: String, ByteArray) -> ByteArray,
-    inputDir: File? = null
+    inputDir: File? = null,
+    transformer: (canonicalName: String, byteArray: ByteArray) -> ByteArray
 ) {
     when {
         isDirectory -> this.toURI().let { base ->
             this.search().parallelStream().forEach {
-                it.transform(File(output, base.relativize(it.toURI()).path), transformer, inputDir)
+                it.transform(File(output, base.relativize(it.toURI()).path), inputDir, transformer)
             }
         }
         isFile -> when (extension.toLowerCase()) {
             "jar" -> JarFile(this).use {
-                it.transform(output, ::JarArchiveEntry, transformer)
+                it.transform(output, { zipEntry ->
+                    JarArchiveEntry(zipEntry)
+                }, transformer)
             }
             "class" -> this.inputStream().use { fs ->
                 val canonicalName = inputDir?.toURI()?.relativize(this.toURI())?.path ?: ""
@@ -59,7 +61,7 @@ fun File.transform(
 
 fun ZipFile.transform(
     output: OutputStream,
-    entryFactory: (ZipEntry) -> ZipArchiveEntry = ::ZipArchiveEntry,
+    entryFactory: (ZipEntry) -> ZipArchiveEntry,
     transformer: (canonicalName: String, sourceBytes: ByteArray) -> ByteArray
 ) {
     val entries = mutableSetOf<String>()
@@ -101,21 +103,23 @@ fun ZipFile.transform(
             System.err.println("Duplicated jar entry: ${this.name}!/${entry.name}")
         }
     }
-    ZipArchiveOutputStream(output).use(creator::writeTo)
+    ZipArchiveOutputStream(output).use {
+        creator.writeTo(it)
+    }
 }
 
 fun ZipFile.transform(
     output: File,
-    entryFactory: (ZipEntry) -> ZipArchiveEntry = ::ZipArchiveEntry,
-    transformer: (canonicalName: String, ByteArray) -> ByteArray
+    entryFactory: (ZipEntry) -> ZipArchiveEntry,
+    transformer: (canonicalName: String, byteArray: ByteArray) -> ByteArray
 ) = output.touch().outputStream().buffered().use {
     transform(it, entryFactory, transformer)
 }
 
 fun ZipInputStream.transform(
     output: OutputStream,
-    entryFactory: (ZipEntry) -> ZipArchiveEntry = ::ZipArchiveEntry,
-    transformer: (canonicalName: String, ByteArray) -> ByteArray
+    entryFactory: (ZipEntry) -> ZipArchiveEntry,
+    transformer: (canonicalName: String, byteArray: ByteArray) -> ByteArray
 ) {
     val creator = ParallelScatterZipCreator()
     val entries = mutableSetOf<String>()
@@ -135,13 +139,15 @@ fun ZipInputStream.transform(
         }
     }
 
-    ZipArchiveOutputStream(output).use(creator::writeTo)
+    ZipArchiveOutputStream(output).use {
+        creator.writeTo(it)
+    }
 }
 
 fun ZipInputStream.transform(
     output: File,
-    entryFactory: (ZipEntry) -> ZipArchiveEntry = ::ZipArchiveEntry,
-    transformer: (canonicalName: String, ByteArray) -> ByteArray
+    entryFactory: (ZipEntry) -> ZipArchiveEntry,
+    transformer: (canonicalName: String, byteArray: ByteArray) -> ByteArray
 ) = output.touch().outputStream().buffered().use {
     transform(it, entryFactory, transformer)
 }

@@ -114,7 +114,12 @@ open class DebounceTransform(private val project: Project) : Transform() {
                             Format.DIRECTORY
                         )
                         val output = File(outputDir, inputDir.toURI().relativize(file.toURI()).path)
-                        file.transform(output, ::transform, inputDir)
+                        file.transform(
+                            output,
+                            inputDir
+                        ) { canonicalName: String, byteArray: ByteArray ->
+                            transform(canonicalName, byteArray)
+                        }
                     }
                     else -> {
 
@@ -129,7 +134,9 @@ open class DebounceTransform(private val project: Project) : Transform() {
                 dirInput.scopes,
                 Format.DIRECTORY
             )
-            inputDir.transform(outputDir, ::transform, inputDir)
+            inputDir.transform(outputDir, inputDir) { canonicalName: String, byteArray: ByteArray ->
+                transform(canonicalName, byteArray)
+            }
         }
     }
 
@@ -146,7 +153,11 @@ open class DebounceTransform(private val project: Project) : Transform() {
         if (isIncremental) {
             when (inputJar.status) {
                 Status.ADDED, Status.CHANGED -> {
-                    inputJar.file.transform(outputJar, ::transform)
+                    inputJar.file.transform(
+                        outputJar
+                    ) { canonicalName: String, byteArray: ByteArray ->
+                        transform(canonicalName, byteArray)
+                    }
                 }
                 Status.REMOVED -> FileUtils.delete(outputJar)
                 else -> {
@@ -155,7 +166,9 @@ open class DebounceTransform(private val project: Project) : Transform() {
             }
             return
         }
-        inputJar.file.transform(outputJar, ::transform)
+        inputJar.file.transform(outputJar) { canonicalName: String, byteArray: ByteArray ->
+            transform(canonicalName, byteArray)
+        }
     }
 
 
