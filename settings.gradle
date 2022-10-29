@@ -1,3 +1,4 @@
 include ':app'
 include ':debounce-lib'
 includeBuild 'debounce-plugin'
+include ':asm-test'
