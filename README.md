@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.1.0'
+        classpath 'io.github.sy007:debounce-plugin:1.1.1'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.1.0'
+    implementation 'io.github.sy007:debounce-lib:1.1.1'
 }
 ```
 
@@ -346,6 +346,11 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+## 1.1.1
+
+1. 修复Lambda表达式字节码解析异常 [#6](https://github.com/sy007/DebouncePlugin/issues/6)
+2. 修复kotlin方法引用异常 [#7](https://github.com/sy007/DebouncePlugin/issues/7)
 
 ### 1.1.0
 
