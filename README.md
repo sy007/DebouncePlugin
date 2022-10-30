@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.1.1'
+        classpath 'io.github.sy007:debounce-plugin:1.1.2'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.1.1'
+    implementation 'io.github.sy007:debounce-lib:1.1.2'
 }
 ```
 
@@ -346,6 +346,10 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+## 1.1.2
+
+1. 修复checkTime配置无效问题 [#6](https://github.com/sy007/DebouncePlugin/issues/7#issuecomment-1296265701)
 
 ## 1.1.1
 

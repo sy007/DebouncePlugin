@@ -90,6 +90,9 @@ open class DebounceExtension(project: Project) {
         includeForMethodAnnotation.contains(annotation)
 
     fun matchClassPath(classPath: String): Boolean {
+        if (ConfigUtil.sOwnerClassPath == classPath) {
+            return true
+        }
         val path = FileSystems.getDefault().getPath(classPath)
         if (excludeGlobPathMatcher.isNotEmpty() && matchClassPath(path, excludeGlobPathMatcher)) {
             return false
