@@ -36,7 +36,7 @@ debounce {
     //debug为true时会有日志输出
     isDebug = true
     //两次点击相隔超过多长时间就认定为非抖动
-    checkTime = 500
+    checkTime = 600
     //输出修改报告
     generateReport = true
     //glob语法，类似于.gitignore 编写规则
