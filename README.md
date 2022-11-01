@@ -28,7 +28,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.1.2'
+        classpath 'io.github.sy007:debounce-plugin:1.1.3'
     }
 }
 
@@ -51,7 +51,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.1.2'
+    implementation 'io.github.sy007:debounce-lib:1.1.3'
 }
 ```
 
@@ -346,6 +346,10 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+## 1.1.3
+
+1. 适配JDK9,11,17 inDy指令解析 [#6](https://github.com/sy007/DebouncePlugin/issues/6)
 
 ## 1.1.2
 
