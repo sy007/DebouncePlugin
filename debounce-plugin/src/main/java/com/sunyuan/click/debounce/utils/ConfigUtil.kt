@@ -22,6 +22,7 @@ object ConfigUtil {
     val sInterfaceSet: MutableSet<String> = mutableSetOf()
 
     const val sOwnerClassPath = "com/sunyuan/debounce/lib/BounceChecker.class"
+    const val LambdaBSMOwner = "java/lang/invoke/LambdaMetafactory"
 
     /**
      * 实例方法插入的字节码

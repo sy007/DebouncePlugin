@@ -83,6 +83,14 @@ class ClickMethodVisitor(
             if (node !is InvokeDynamicInsnNode) {
                 continue
             }
+            /**
+             * 1.JDK 9  字符串拼接使用inDy指令;此时bsm.owner=java/lang/invoke/StringConcatFactory
+             * 2.JDK 11 动态常量使用inDy指令;此时bsm.owner=java/lang/invoke/ConstantBootstraps
+             * 3.JDK 17 switch的模式匹配使用inDy指令;此时bsm.owner=java/lang/runtime/SwitchBootstraps
+             */
+            if (ConfigUtil.LambdaBSMOwner != node.bsm.owner) {
+                continue
+            }
             val desc: String = node.desc
             val samBaseType = Type.getType(desc).returnType
             //接口名
@@ -91,15 +99,17 @@ class ClickMethodVisitor(
             //方法名
             val samMethodName: String = node.name
             val bsmArgs: Array<Any> = node.bsmArgs
+            //对于Lambda表达式bsmArgs是三个类型固定的值
             //方法描述符
-            //val samMethodType = bsmArgs[0] as Type  有的项目会出现ClassCastException
+            val samMethodType = bsmArgs[0] as Type
             //脱糖后的方法，从Handle中取出该方法的信息
             val handle: Handle = bsmArgs[1] as Handle
             val hookMethodIterator = ConfigUtil.sHookMethods.iterator()
             while (hookMethodIterator.hasNext()) {
                 val methodEntity = hookMethodIterator.next().value
                 if (methodEntity.interfaceName == samBase &&
-                    methodEntity.methodName == samMethodName
+                    methodEntity.methodName == samMethodName &&
+                    methodEntity.methodDesc == samMethodType.descriptor
                 ) {
                     record(handle.owner, handle.name, handle.desc, handle.tag)
                     break

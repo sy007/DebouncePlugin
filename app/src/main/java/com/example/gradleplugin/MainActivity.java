@@ -87,6 +87,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    public void testAsmOnJDK9() {
+        String str = "hello world at" + System.currentTimeMillis();
+        LogUtil.d(str);
+    }
+
     /**
      * xml中设置的点击事件
      */

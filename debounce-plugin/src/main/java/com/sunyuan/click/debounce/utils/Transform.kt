@@ -9,10 +9,8 @@ import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.parallel.InputStreamSupplier
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadFactory
@@ -156,24 +154,4 @@ private val JAR_SIGNATURE_EXTENSIONS = setOf("SF", "RSA", "DSA", "EC")
 
 private fun isJarSignatureRelatedFiles(name: String): Boolean {
     return name.startsWith("META-INF/") && name.substringAfterLast('.') in JAR_SIGNATURE_EXTENSIONS
-}
-
-private const val DEFAULT_BUFFER_SIZE = 8 * 1024
-
-private fun InputStream.readBytes(estimatedSize: Int = DEFAULT_BUFFER_SIZE): ByteArray {
-    val buffer = ByteArrayOutputStream(maxOf(estimatedSize, this.available()))
-    copyTo(buffer)
-    return buffer.toByteArray()
-}
-
-private fun InputStream.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
-    var bytesCopied: Long = 0
-    val buffer = ByteArray(maxOf(bufferSize, this.available()))
-    var bytes = read(buffer)
-    while (bytes >= 0) {
-        out.write(buffer, 0, bytes)
-        bytesCopied += bytes
-        bytes = read(buffer)
-    }
-    return bytesCopied
 }

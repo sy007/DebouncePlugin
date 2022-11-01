@@ -6,12 +6,13 @@ import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
-import org.apache.commons.codec.digest.DigestUtils.md5Hex
+import org.apache.commons.codec.digest.DigestUtils
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 
@@ -57,8 +58,9 @@ open class DebounceTransform(private val project: Project) : Transform() {
         val startTime = System.currentTimeMillis()
         worker = Worker()
         val urlClassLoader: URLClassLoader = ClassLoaderHelper.getClassLoader(
-            inputs, transformInvocation.referencedInputs,
-            project.getAndroidJarPath()
+            inputs,
+            transformInvocation.referencedInputs,
+            project.appEx.bootClasspath
         )
         findInterfaceImplHelper.setUrlClassLoader(urlClassLoader)
         try {
@@ -77,6 +79,9 @@ open class DebounceTransform(private val project: Project) : Transform() {
         } finally {
             worker.shutdown()
             worker.awaitTermination(1, TimeUnit.HOURS)
+            urlClassLoader.use {
+                it.close()
+            }
         }
         LogUtil.warn("--------------------------------------------------------")
         val costTime: Long = System.currentTimeMillis() - startTime
@@ -159,7 +164,9 @@ open class DebounceTransform(private val project: Project) : Transform() {
                         transform(canonicalName, byteArray)
                     }
                 }
-                Status.REMOVED -> FileUtils.delete(outputJar)
+                Status.REMOVED -> {
+                    FileUtils.delete(outputJar)
+                }
                 else -> {
 
                 }
@@ -185,5 +192,5 @@ open class DebounceTransform(private val project: Project) : Transform() {
         }
 
     private val QualifiedContent.id: String
-        get() = md5Hex(file.absolutePath)
+        get() = DigestUtils.md5Hex(file.absolutePath)
 }

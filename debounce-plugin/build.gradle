@@ -59,7 +59,6 @@ dependencies {
     implementation 'org.ow2.asm:asm-util:7.3.1'
     implementation 'org.ow2.asm:asm-commons:7.3.1'
     implementation "com.android.tools.build:gradle:3.5.0"
-    implementation "com.android.tools.build:gradle-api:3.5.0"
     implementation "org.apache.commons:commons-compress:1.21"
     implementation "com.didiglobal.booster:booster-kotlinx:4.6.0"
 }

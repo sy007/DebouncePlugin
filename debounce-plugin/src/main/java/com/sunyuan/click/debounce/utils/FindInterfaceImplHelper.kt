@@ -1,7 +1,6 @@
 package com.sunyuan.click.debounce.utils
 
 import org.objectweb.asm.ClassReader
-import java.io.IOException
 
 /**
  * author : Six
@@ -62,23 +61,11 @@ class FindInterfaceImplHelper {
     }
 
     private fun getClassReader(className: String): ClassReader? {
-        val inputStream = urlClassLoader.getResourceAsStream("$className.class")
-        try {
-            if (inputStream != null) {
-                return ClassReader(inputStream)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
+        return urlClassLoader.getResourceAsStream("$className.class")?.use {
+            it.readBytes()
+        }?.run {
+            ClassReader(this)
         }
-        return null
     }
 
     companion object {
