@@ -1,6 +1,7 @@
 import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
+import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -14,21 +15,21 @@ import java.util.concurrent.ConcurrentHashMap
  *    version: 1.0
  */
 class ClickMethodVisitor(
-    private val debounceExtension: DebounceExtension,
-    private val findInterfaceImplHelper: FindInterfaceImplHelper
+    private val nextClassVisitor: ClassVisitor,
+    private val hookMethodEntities: Map<String, MethodEntity>,
+    private val includeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean,
+    private val excludeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean,
+    private val collectImplTargetInterfaces: (name: String) -> Set<String>
 ) : ClassNode(Opcodes.ASM7) {
-    private val collectImplInterfaces = mutableSetOf<String>()
+    private lateinit var implTargetInterfaces: Set<String>
     override fun visitEnd() {
         super.visitEnd()
         if (name == ConfigUtil.sOwner) {
             BounceCheckerModifyUtil.modify(methods)
+            accept(nextClassVisitor)
             return
         }
-        findInterfaceImplHelper.findTargetInterfaceImpl(
-            name,
-            ConfigUtil.sInterfaceSet,
-            collectImplInterfaces
-        )
+        implTargetInterfaces = collectImplTargetInterfaces(name)
         methods.filter {
             !excludeMethodOfAnnotation(it.visibleAnnotations)
         }.forEach { methodNode ->
@@ -37,6 +38,7 @@ class ClickMethodVisitor(
             collectMethodOfLambda(methodNode)
         }
         ClickMethodModifyUtil.modify(this)
+        accept(nextClassVisitor)
     }
 
 
@@ -61,11 +63,11 @@ class ClickMethodVisitor(
     }
 
     private fun collectMethodOfImplInterface(methodNode: MethodNode) {
-        if (collectImplInterfaces.isEmpty()) {
+        if (implTargetInterfaces.isEmpty()) {
             return
         }
-        val methodEntity = ConfigUtil.sHookMethods[methodNode.name + methodNode.desc]
-        if (methodEntity != null && collectImplInterfaces.contains(methodEntity.interfaceName)
+        val methodEntity = hookMethodEntities[methodNode.name + methodNode.desc]
+        if (methodEntity != null && implTargetInterfaces.contains(methodEntity.interfaceName)
             && methodEntity.methodName == methodNode.name && methodEntity.methodDesc == methodNode.desc
         ) {
             record(name, methodNode.name, methodNode.desc)
@@ -104,7 +106,7 @@ class ClickMethodVisitor(
             val samMethodType = bsmArgs[0] as Type
             //脱糖后的方法，从Handle中取出该方法的信息
             val handle: Handle = bsmArgs[1] as Handle
-            val hookMethodIterator = ConfigUtil.sHookMethods.iterator()
+            val hookMethodIterator = hookMethodEntities.iterator()
             while (hookMethodIterator.hasNext()) {
                 val methodEntity = hookMethodIterator.next().value
                 if (methodEntity.interfaceName == samBase &&
@@ -121,7 +123,7 @@ class ClickMethodVisitor(
     private fun includeMethodOfAnnotation(annotationNodes: List<AnnotationNode>?): Boolean {
         return kotlin.run {
             annotationNodes?.forEach {
-                if (debounceExtension.includeMethodOfAnnotation(it.desc)) {
+                if (includeMethodOfAnnotation(it)) {
                     return@run true
                 }
             }
@@ -132,7 +134,7 @@ class ClickMethodVisitor(
     private fun excludeMethodOfAnnotation(annotationNodes: List<AnnotationNode>?): Boolean {
         return kotlin.run {
             annotationNodes?.forEach {
-                if (debounceExtension.excludeMethodOfAnnotation(it.desc)) {
+                if (excludeMethodOfAnnotation(it)) {
                     return@run true
                 }
             }

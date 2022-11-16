@@ -1,7 +1,5 @@
 package com.sunyuan.click.debounce.utils
 
-import com.sunyuan.click.debounce.entity.MethodEntity
-import java.util.*
 
 /**
  * author : Sy007
@@ -10,16 +8,6 @@ import java.util.*
  * version: 1.0
  */
 object ConfigUtil {
-
-    /**
-     * 配置插桩的方法信息
-     */
-    val sHookMethods: MutableMap<String, MethodEntity> = HashMap()
-
-    /**
-     * 用于判断当前扫描的类是否是插桩接口的直接或间接子类
-     */
-    val sInterfaceSet: MutableSet<String> = mutableSetOf()
 
     const val sOwnerClassPath = "com/sunyuan/debounce/lib/BounceChecker.class"
     const val LambdaBSMOwner = "java/lang/invoke/LambdaMetafactory"
@@ -49,12 +37,4 @@ object ConfigUtil {
 
     var sDebug = false
     var sCheckTime = 1000L
-
-    init {
-        sHookMethods["onClick(Landroid/view/View;)V"] = MethodEntity("onClick").apply {
-            methodName = "onClick"
-            methodDesc = "(Landroid/view/View;)V"
-            interfaceName = "android/view/View\$OnClickListener"
-        }
-    }
 }

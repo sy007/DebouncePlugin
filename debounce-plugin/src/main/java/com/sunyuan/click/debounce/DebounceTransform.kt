@@ -1,18 +1,17 @@
+@file:Suppress("DEPRECATION")
+
 package com.sunyuan.click.debounce
 
 import ClickMethodVisitor
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
-import com.android.utils.FileUtils
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
-import org.apache.commons.codec.digest.DigestUtils
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 
@@ -24,10 +23,9 @@ import java.util.concurrent.TimeUnit
  */
 private const val TRANSFORM_NAME = "DebounceTransform"
 
-open class DebounceTransform(private val project: Project) : Transform() {
-    private val findInterfaceImplHelper = FindInterfaceImplHelper()
+open class DebounceTransform(private val project: Project,private val debounceEx:DebounceExtension) : Transform() {
+    private val findImplTargetInterfaceHelper = FindImplTargetInterfaceHelper()
     private lateinit var worker: Worker
-    internal lateinit var debounceEx: DebounceExtension
 
     override fun getName(): String {
         return TRANSFORM_NAME
@@ -55,14 +53,14 @@ open class DebounceTransform(private val project: Project) : Transform() {
             //如果不支持增量更新。
             outputProvider.deleteAll()
         }
-        val startTime = System.currentTimeMillis()
+
         worker = Worker()
         val urlClassLoader: URLClassLoader = ClassLoaderHelper.getClassLoader(
             inputs,
             transformInvocation.referencedInputs,
             project.appEx.bootClasspath
         )
-        findInterfaceImplHelper.setUrlClassLoader(urlClassLoader)
+        findImplTargetInterfaceHelper.setUrlClassLoader(urlClassLoader)
         try {
             inputs.forEach { transformInput ->
                 transformInput.jarInputs.forEach { inputJar ->
@@ -83,10 +81,6 @@ open class DebounceTransform(private val project: Project) : Transform() {
                 it.close()
             }
         }
-        LogUtil.warn("--------------------------------------------------------")
-        val costTime: Long = System.currentTimeMillis() - startTime
-        LogUtil.warn(name + " cost " + costTime + "ms")
-        LogUtil.warn("--------------------------------------------------------")
     }
 
     private fun transformDirInput(
@@ -100,7 +94,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
                 when (status) {
                     Status.REMOVED -> {
                         outputProvider.getContentLocation(
-                            dirInput.id,
+                            dirInput.file.absolutePath,
                             dirInput.contentTypes,
                             dirInput.scopes,
                             Format.DIRECTORY
@@ -113,7 +107,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
                     }
                     Status.ADDED, Status.CHANGED -> {
                         val outputDir = outputProvider.getContentLocation(
-                            dirInput.id,
+                            dirInput.file.absolutePath,
                             dirInput.contentTypes,
                             dirInput.scopes,
                             Format.DIRECTORY
@@ -134,7 +128,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
             }
         } else {
             val outputDir = outputProvider.getContentLocation(
-                dirInput.id,
+                dirInput.file.absolutePath,
                 dirInput.contentTypes,
                 dirInput.scopes,
                 Format.DIRECTORY
@@ -151,7 +145,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
         isIncremental: Boolean
     ) {
         val outputJar = provider.getContentLocation(
-            inputJar.id,
+            inputJar.file.absolutePath,
             inputJar.contentTypes,
             inputJar.scopes, Format.JAR
         )
@@ -165,7 +159,7 @@ open class DebounceTransform(private val project: Project) : Transform() {
                     }
                 }
                 Status.REMOVED -> {
-                    FileUtils.delete(outputJar)
+                    outputJar.delete()
                 }
                 else -> {
 
@@ -180,17 +174,23 @@ open class DebounceTransform(private val project: Project) : Transform() {
 
 
     private fun transform(canonicalName: String, bytes: ByteArray): ByteArray =
-        if (debounceEx.matchClassPath(canonicalName)) {
+        if (DebounceExtension.matchClassPath(canonicalName, debounceEx.includes, debounceEx.excludes)) {
             val cr = ClassReader(bytes)
             val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-            val clickClassVisitor = ClickMethodVisitor(debounceEx, findInterfaceImplHelper)
+            val implTargetInterfaces = mutableSetOf<String>()
+            val clickClassVisitor = ClickMethodVisitor(cw,
+                hookMethodEntities = debounceEx.hookMethodEntities,
+                includeMethodOfAnnotation = {
+                    debounceEx.includeForMethodAnnotation.contains(it.desc)
+                }, excludeMethodOfAnnotation = {
+                    debounceEx.excludeForMethodAnnotation.contains(it.desc)
+                }, { name ->
+                    findImplTargetInterfaceHelper.find(name, debounceEx.hookInterfaces, implTargetInterfaces)
+                    implTargetInterfaces
+                })
             cr.accept(clickClassVisitor, 0)
-            clickClassVisitor.accept(cw)
             cw.toByteArray()
         } else {
             bytes
         }
-
-    private val QualifiedContent.id: String
-        get() = DigestUtils.md5Hex(file.absolutePath)
 }

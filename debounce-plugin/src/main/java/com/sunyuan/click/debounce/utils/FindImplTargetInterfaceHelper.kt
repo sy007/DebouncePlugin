@@ -8,11 +8,12 @@ import org.objectweb.asm.ClassReader
  * desc   :
  * version: 1.0
  */
-class FindInterfaceImplHelper {
-    private lateinit var urlClassLoader: ClassLoader
+class FindImplTargetInterfaceHelper {
 
-    fun setUrlClassLoader(urlClassLoader: ClassLoader) {
-        this.urlClassLoader = urlClassLoader
+    private lateinit var classLoader: ClassLoader
+
+    fun setUrlClassLoader(classLoader: ClassLoader) {
+        this.classLoader = classLoader
     }
 
     /**
@@ -20,20 +21,19 @@ class FindInterfaceImplHelper {
      *
      * @param className             当前类
      * @param targetInterfaces      目标接口
-     * @param collectImplInterfaces 记录直接或间接实现目标接口的接口
-     * 记录结果放入collectImplInterfaces中
+     * @param implTargetInterfaces 记录直接或间接实现目标接口的接口
      */
-    fun findTargetInterfaceImpl(
+    fun find(
         className: String?,
         targetInterfaces: Set<String>,
-        collectImplInterfaces: MutableSet<String>
+        implTargetInterfaces: MutableSet<String>
     ) {
-        if (className.isNullOrEmpty() || isObject(className) || targetInterfaces.size == collectImplInterfaces.size) {
+        if (className.isNullOrEmpty() || isObject(className) || targetInterfaces.size == implTargetInterfaces.size) {
             return
         }
         val reader = getClassReader(className) ?: return
-        matchTargetInterface(reader.interfaces, targetInterfaces, collectImplInterfaces)
-        findTargetInterfaceImpl(reader.superName, targetInterfaces, collectImplInterfaces)
+        matchTargetInterface(reader.interfaces, targetInterfaces, implTargetInterfaces)
+        find(reader.superName, targetInterfaces, implTargetInterfaces)
     }
 
     /**
@@ -61,7 +61,7 @@ class FindInterfaceImplHelper {
     }
 
     private fun getClassReader(className: String): ClassReader? {
-        return urlClassLoader.getResourceAsStream("$className.class")?.use {
+        return classLoader.getResourceAsStream("$className.class")?.use {
             it.readBytes()
         }?.run {
             ClassReader(this)

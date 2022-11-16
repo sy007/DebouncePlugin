@@ -6,6 +6,9 @@ import com.didiglobal.booster.kotlinx.file
 import com.sunyuan.click.debounce.EXTENSION_NAME
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import java.io.File
 
 /**
@@ -39,9 +42,3 @@ val Project.debounceEx: DebounceExtension
     get() = extensions.findByName(EXTENSION_NAME) as DebounceExtension
 
 
-fun Project.getAndroidJarPath(): String {
-    var sdkDirectory = appEx.sdkDirectory.absolutePath
-    val compileSdkVersion = appEx.compileSdkVersion
-    sdkDirectory = sdkDirectory + File.separator + "platforms" + File.separator
-    return sdkDirectory + compileSdkVersion + File.separator + "android.jar"
-}

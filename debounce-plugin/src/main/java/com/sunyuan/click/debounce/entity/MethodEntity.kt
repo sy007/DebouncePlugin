@@ -1,5 +1,7 @@
 package com.sunyuan.click.debounce.entity
 
+import java.io.Serializable
+
 /**
  * author : Sy007
  * date   : 2020/11/29
@@ -7,7 +9,7 @@ package com.sunyuan.click.debounce.entity
  * version: 1.0
  */
 
-open class MethodEntity {
+open class MethodEntity : Serializable {
     @set:JvmName("methodName")
     var methodName: String = ""
 
@@ -25,6 +27,7 @@ open class MethodEntity {
     /**
      * lambda method access flags.
      */
+    @Transient
     var access: Int = -1
 
     constructor(name: String) {

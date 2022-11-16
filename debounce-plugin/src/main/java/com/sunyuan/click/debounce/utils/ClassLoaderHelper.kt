@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.sunyuan.click.debounce.utils
 
 import com.android.build.api.transform.TransformInput

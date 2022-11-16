@@ -20,15 +20,6 @@ import java.nio.file.PathMatcher
  * version: 1.0
  */
 open class DebounceExtension(project: Project) {
-
-    companion object {
-        private const val GLOB_SYNTAX = "glob:"
-        private const val methodEntityEx = "In %s,the %s of %s cannot be empty."
-    }
-
-    private lateinit var includeGlobPathMatcher: MutableSet<PathMatcher>
-    private lateinit var excludeGlobPathMatcher: MutableSet<PathMatcher>
-
     val methodEntities: NamedDomainObjectContainer<MethodEntity> =
         project.container(MethodEntity::class.java)
 
@@ -40,6 +31,16 @@ open class DebounceExtension(project: Project) {
     var excludes: MutableSet<String> = mutableSetOf()
     var includeForMethodAnnotation: MutableSet<String> = mutableSetOf()
     var excludeForMethodAnnotation: MutableSet<String> = mutableSetOf()
+
+
+    internal val hookMethodEntities = mutableMapOf<String, MethodEntity>().apply {
+        put("onClick(Landroid/view/View;)V", MethodEntity("onClick").apply {
+            methodName = "onClick"
+            methodDesc = "(Landroid/view/View;)V"
+            interfaceName = "android/view/View\$OnClickListener"
+        })
+    }
+    internal val hookInterfaces = mutableSetOf<String>()
 
 
     fun init() {
@@ -69,48 +70,25 @@ open class DebounceExtension(project: Project) {
                     identification
                 )
             }
-            ConfigUtil.sHookMethods[methodEntity.methodName + methodEntity.methodDesc] =
-                methodEntity
+            hookMethodEntities[methodEntity.methodName + methodEntity.methodDesc] = methodEntity
         }
-        ConfigUtil.sHookMethods.forEach { (_: String, methodEntity: MethodEntity) ->
+        hookMethodEntities.forEach { (_: String, methodEntity: MethodEntity) ->
             val interfaceName = methodEntity.interfaceName
-            ConfigUtil.sInterfaceSet.add(interfaceName)
+            hookInterfaces.add(interfaceName)
         }
-        includeGlobPathMatcher = includes.toPathMatchers()
-        excludeGlobPathMatcher = excludes.toPathMatchers()
-
         includeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/ClickDeBounce;")
         excludeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/IgnoreClickDeBounce;")
+        printlnConfigInfo()
     }
 
-    fun excludeMethodOfAnnotation(annotation: String): Boolean =
-        excludeForMethodAnnotation.contains(annotation)
-
-    fun includeMethodOfAnnotation(annotation: String): Boolean =
-        includeForMethodAnnotation.contains(annotation)
-
-    fun matchClassPath(classPath: String): Boolean {
-        if (ConfigUtil.sOwnerClassPath == classPath) {
-            return true
-        }
-        val path = FileSystems.getDefault().getPath(classPath)
-        if (excludeGlobPathMatcher.isNotEmpty() && matchClassPath(path, excludeGlobPathMatcher)) {
-            return false
-        }
-        return includeGlobPathMatcher.isEmpty() || matchClassPath(path, includeGlobPathMatcher)
+    internal fun clear() {
+        includeGlobPathMatcher?.clear()
+        includeGlobPathMatcher = null
+        excludeGlobPathMatcher?.clear()
+        excludeGlobPathMatcher = null
     }
 
-    private fun matchClassPath(path: Path, matchers: Set<PathMatcher>): Boolean {
-        for (matcher in matchers) {
-            if (matcher.matches(path)) {
-                return true
-            }
-        }
-        return false
-    }
-
-
-    fun printlnConfigInfo() {
+    private fun printlnConfigInfo() {
         LogUtil.warn("------------------debounce plugin config info--------------------")
         val configMap: LinkedHashMap<String, Any?> = LinkedHashMap()
         configMap["isDebug"] = isDebug
@@ -133,35 +111,82 @@ open class DebounceExtension(project: Project) {
 
     private fun getPrintMethodEntities(): LinkedHashMap<String, MethodEntity> {
         val printMethodEntities = linkedMapOf<String, MethodEntity>()
-        ConfigUtil.sHookMethods.forEach {
+        hookMethodEntities.forEach {
             val key = it.value.name
             printMethodEntities[key] = it.value
         }
         return printMethodEntities
     }
 
-    private fun Set<String>.toPathMatchers(): MutableSet<PathMatcher> {
-        val paths = this
-        val matchers = mutableSetOf<PathMatcher>()
-        if (paths.isEmpty()) {
+
+    companion object {
+        private const val GLOB_SYNTAX = "glob:"
+        private const val methodEntityEx = "In %s,the %s of %s cannot be empty."
+        internal var excludeGlobPathMatcher: MutableSet<PathMatcher>? = null
+        internal var includeGlobPathMatcher: MutableSet<PathMatcher>? = null
+
+        private fun Set<String>.toPathMatchers(): MutableSet<PathMatcher> {
+            val paths = this
+            val matchers = mutableSetOf<PathMatcher>()
+            if (paths.isEmpty()) {
+                return matchers
+            }
+            for (path in paths) {
+                try {
+                    val fs = FileSystems.getDefault()
+                    val matcher = fs.getPathMatcher("$GLOB_SYNTAX$path")
+                    matchers.add(matcher)
+                } catch (e: IllegalArgumentException) {
+                    LogUtil.error(
+                        String.format(
+                            "Ignoring relativePath '{%s}' glob pattern.Because something unusual happened here '{%s}'",
+                            path,
+                            e
+                        )
+                    )
+                }
+            }
             return matchers
         }
-        for (path in paths) {
-            try {
-                val fs = FileSystems.getDefault()
-                val matcher = fs.getPathMatcher(GLOB_SYNTAX + path)
-                matchers.add(matcher)
-            } catch (e: IllegalArgumentException) {
-                LogUtil.error(
-                    String.format(
-                        "Ignoring relativePath '{%s}' glob pattern.Because something unusual happened here '{%s}'",
-                        path,
-                        e
-                    )
-                )
+
+
+        fun matchClassPath(
+            canonicalName: String,
+            includes: Set<String>,
+            excludes: Set<String>
+        ): Boolean {
+            if (ConfigUtil.sOwnerClassPath == canonicalName) {
+                return true
             }
+            if (includeGlobPathMatcher == null) {
+                includeGlobPathMatcher = includes.toPathMatchers()
+            }
+            if (excludeGlobPathMatcher == null) {
+                excludeGlobPathMatcher = excludes.toPathMatchers()
+            }
+            val path = FileSystems.getDefault().getPath(canonicalName)
+            if (excludeGlobPathMatcher!!.isNotEmpty() && matchClassPath(
+                    path,
+                    excludeGlobPathMatcher!!
+                )
+            ) {
+                return false
+            }
+            return includeGlobPathMatcher!!.isEmpty() || matchClassPath(
+                path,
+                includeGlobPathMatcher!!
+            )
         }
-        return matchers
+
+
+        private fun matchClassPath(path: Path, matchers: Set<PathMatcher>): Boolean {
+            for (matcher in matchers) {
+                if (matcher.matches(path)) {
+                    return true
+                }
+            }
+            return false
+        }
     }
 }
 
