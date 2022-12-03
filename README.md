@@ -4,20 +4,21 @@ Android点击事件防抖动插件，主要为了解决项目以及第三方库�
 
 ## 1.支持以下功能：
 
-1. 支持Java,Kotlin点击事件防抖
-2. 支持Java,Kotlin Lambda点击事件防抖
-3. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
-4. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
-5. 支持配置点击事件间隔，即指定时间内，只允许触发一次点击事件
-6. 支持多种类型的点击事件处理。例如：
+1. 支持application ,library project 中使用
+2. 支持Java,Kotlin点击事件防抖
+3. 支持Java,Kotlin Lambda点击事件防抖
+4. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
+5. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
+6. 支持配置点击事件间隔，即指定时间内，只允许触发一次点击事件
+7. 支持多种类型的点击事件处理。例如：
    - ListView#onItemClick
    - ListView#onItemSelected
    - ExpandableListView#onGroupClick
    - ExpandableListView#onChildClick
    - ...只要你想处理，都支持。
-7. 支持xml设置的点击事件防抖
-8. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
-9. 代码修改透明(插件对代码的修改会生成一个html报告)
+8. 支持xml设置的点击事件防抖
+9. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
+10. 代码修改透明(插件对代码的修改会生成一个html报告)
 
 ## 2.如何使用
 
@@ -28,7 +29,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.1.3'
+        classpath 'io.github.sy007:debounce-plugin:1.2.0'
     }
 }
 
@@ -51,7 +52,7 @@ android{
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.1.3'
+    implementation 'io.github.sy007:debounce-lib:1.2.0'
 }
 ```
 
@@ -346,6 +347,10 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 
 
 ## 6.更新日志
+
+## 1.2.0
+
+1. 支持Library中使用debounce-plugin 
 
 ## 1.1.3
 

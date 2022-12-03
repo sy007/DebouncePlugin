@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.sunyuan.simple.lib">
+
+    <application>
+        <activity
+            android:name=".LibraryActivity"
+            android:exported="false" />
+    </application>
+</manifest>

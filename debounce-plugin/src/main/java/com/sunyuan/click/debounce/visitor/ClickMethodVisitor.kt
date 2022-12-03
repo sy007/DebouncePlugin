@@ -1,5 +1,4 @@
 import com.sunyuan.click.debounce.entity.MethodEntity
-import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle

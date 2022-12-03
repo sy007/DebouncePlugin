@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.sunyuan.debounce.lib.ClickDeBounce;
 import com.sunyuan.debounce.lib.IgnoreClickDeBounce;
+import com.sunyuan.simple.lib.LibraryActivity;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -63,6 +64,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
                 LogUtil.d("忽略点击防抖");
+            }
+        });
+
+        findViewById(R.id.btn_jump_to_lib).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, LibraryActivity.class);
+                startActivity(intent);
             }
         });
     }

@@ -2,16 +2,14 @@
 
 package com.sunyuan.click.debounce
 
-import com.android.build.api.instrumentation.FramesComputationMode
-import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.transform.QualifiedContent
 import com.android.build.api.transform.Transform
-import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.AppExtension
+import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.build.gradle.internal.pipeline.TransformTask
-import com.android.build.gradle.tasks.TransformClassesWithAsmTask
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
 import org.gradle.api.GradleException
@@ -29,48 +27,27 @@ internal const val EXTENSION_NAME = "debounce"
 
 class DebouncePlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        if (project.isApp) {
-            LogUtil.init(project.logger)
-            val debounceEx = project.extensions.create(EXTENSION_NAME, DebounceExtension::class.java, project)
-            if (!project.enablePlugin) {
-                LogUtil.warn("debounce-plugin is off.")
-                return
-            }
-            LogUtil.warn("debounce-plugin is on.")
-            when {
-                Version.V7_X -> {
-                    val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
-                    androidComponents.onVariants { variant ->
-                        variant.instrumentation.transformClassesWith(
-                            DebounceTransformV7::class.java,
-                            InstrumentationScope.ALL) {
-                            it.debug.set(debounceEx.isDebug)
-                            it.generateReport.set(debounceEx.generateReport)
-                            it.checkTime.set(debounceEx.checkTime)
-                            it.includes.set(debounceEx.includes)
-                            it.excludes.set(debounceEx.excludes)
-                            it.includeForMethodAnnotation.set(debounceEx.includeForMethodAnnotation)
-                            it.excludeForMethodAnnotation.set(debounceEx.excludeForMethodAnnotation)
-                            it.hookMethodEntities.set(debounceEx.hookMethodEntities)
-                            it.hookInterfaces.set(debounceEx.hookInterfaces)
-                        }
-                        variant.instrumentation.setAsmFramesComputationMode(
-                            FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
-                        )
-                    }
+        project.extensions.findByName("android")
+            ?: throw GradleException("$project is not an Android project")
+        LogUtil.init(project.logger)
+        val debounceEx =
+            project.extensions.create(EXTENSION_NAME, DebounceExtension::class.java, project)
+        if (!project.enablePlugin) {
+            LogUtil.warn("debounce-plugin is off.")
+            return
+        }
+        LogUtil.warn("debounce-plugin is on.")
+
+        project.getAndroid<BaseExtension>()
+            .registerTransform(DebounceTransform(project, debounceEx))
+
+        project.afterEvaluate {
+            debounceExConfig(project)
+            classesTransformCompleteListener(project) {
+                if (!debounceEx.generateReport) {
+                    return@classesTransformCompleteListener
                 }
-                else -> {
-                    project.appEx.registerTransform(DebounceTransform(project, debounceEx))
-                }
-            }
-            project.afterEvaluate {
-                debounceExConfig(project)
-                classesTransformCompleteListener(project) {
-                    if (!debounceEx.generateReport) {
-                        return@classesTransformCompleteListener
-                    }
-                    dump(project, it.name)
-                }
+                dump(project, it.name)
             }
         }
     }
@@ -88,42 +65,38 @@ class DebouncePlugin : Plugin<Project> {
         project: Project,
         complete: (variant: BaseVariant) -> Unit
     ) {
-        val appEx = project.appEx
-        appEx.applicationVariants.forEach { variant ->
-            val task = when {
-                Version.V7_X -> {
-                    val variantName = variant.name.capitalize()
-                    project.tasks.withType(TransformClassesWithAsmTask::class.java).find {
-                        it.name.contains(variantName)
-                    }
-                }
-                else -> {
-                    val transform = findLastClassesTransform(appEx)
-                    val variantName = variant.name.capitalize()
-                    project.tasks.withType(TransformTask::class.java).find { transformTask ->
-                        transformTask.name.endsWith(variantName) && transformTask.transform == transform
-                    }
-                }
-            }
-            var startTime: Long = System.currentTimeMillis()
-            task?.doFirst {
-                startTime = System.currentTimeMillis()
-                MethodUtil.sModifyOfMethods.clear()
+        val android = project.getAndroid<BaseExtension>()
+        when (android) {
+            is AppExtension -> android.applicationVariants
+            is LibraryExtension -> android.libraryVariants
+            else -> emptyList<BaseVariant>()
+        }.takeIf<Collection<BaseVariant>> {
+            it.isNotEmpty()
+        }?.forEach { variant ->
+            val transform = findLastClassesTransform(project, android)
+            project.tasks.withType(TransformTask::class.java).find { transformTask ->
+                transformTask.name.endsWith(variant.name.capitalize()) && transformTask.transform == transform
             }?.doLast {
-                project.debounceEx.clear()
-                LogUtil.warn("--------------------------------------------------------")
-                val costTime: Long = System.currentTimeMillis() - startTime
-                LogUtil.warn("DebounceTransform" + " cost " + costTime + "ms")
-                LogUtil.warn("--------------------------------------------------------")
                 complete(variant)
             }
         }
     }
 
-    private fun findLastClassesTransform(appExtension: AppExtension): Transform {
-        return appExtension.transforms.reversed().firstOrNull {
+    private fun findLastClassesTransform(
+        project: Project,
+        baseExtension: BaseExtension
+    ): Transform {
+        return baseExtension.transforms.reversed().firstOrNull {
             val scopeFullProject = mutableSetOf<QualifiedContent.Scope>()
-            TransformManager.SCOPE_FULL_PROJECT.forEach { type ->
+            when {
+                project.isApp -> {
+                    TransformManager.SCOPE_FULL_PROJECT
+                }
+                project.isLibrary -> {
+                    TransformManager.PROJECT_ONLY
+                }
+                else -> TODO("Not an Android project")
+            }.forEach { type ->
                 scopeFullProject.add(type as QualifiedContent.Scope)
             }
             it.scopes.containsAll(scopeFullProject) && it.inputTypes.contains(QualifiedContent.DefaultContentType.CLASSES)

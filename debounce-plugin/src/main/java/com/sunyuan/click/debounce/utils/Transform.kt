@@ -12,10 +12,7 @@ import org.apache.commons.compress.parallel.InputStreamSupplier
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.jar.JarFile
 import java.util.zip.ZipEntry
@@ -63,20 +60,18 @@ fun ZipFile.transform(
     transformer: (canonicalName: String, sourceBytes: ByteArray) -> ByteArray
 ) {
     val entries = mutableSetOf<String>()
-    val creator = ParallelScatterZipCreator(ThreadPoolExecutor(
-        NCPU, NCPU,
-        0L, TimeUnit.MILLISECONDS,
-        LinkedBlockingQueue(), object : ThreadFactory {
-            private var threadNumber = AtomicInteger(1)
-            override fun newThread(r: Runnable): Thread {
-                return Thread(r).apply {
-                    name = "debounce-transform-jar-thread-" + threadNumber.getAndIncrement()
-                    isDaemon = true
-                    priority = Thread.NORM_PRIORITY
-                }
-            }
-        }) { r, _ -> r.run() })
-
+    val creator = ParallelScatterZipCreator(
+        ThreadPoolExecutor(
+            NCPU,
+            NCPU,
+            0L,
+            TimeUnit.MILLISECONDS,
+            LinkedBlockingQueue(),
+            Executors.defaultThreadFactory()
+        ) { runnable, _ ->
+            runnable.run()
+        }
+    )
     entries().asSequence().filterNot {
         isJarSignatureRelatedFiles(it.name)
     }.forEach { entry ->
