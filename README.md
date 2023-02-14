@@ -129,7 +129,7 @@ debounce {
         */
        private final BounceChecker checker = new BounceChecker();
    
-      /**
+       /**
         * 处理{@link View.OnClickListener#onClick(View)}点击事件防抖
         * <p>
         * 根据{@link InterfaceMethodProxy}注解上的配置，插件扫描到{@link View.OnClickListener#onClick(View)}时
@@ -147,9 +147,12 @@ debounce {
            /**
             * {@link View.OnClickListener#onClick(View)}只有一个参数View，所以直接取
             */
+           if (param.args[0] instanceof CheckBox) {
+               return false;
+           }
            View view = (View) param.args[0];
            boolean isBounce = checker.checkView(param.owner, param.methodName, view, CHECK_TIME);
-           LogUtil.d("onClickProxy=>" + param.owner + "|" + param.methodName + "|" + "isBounce:" + isBounce);
+           LogUtil.d("onClickProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
            return isBounce;
        }
      
