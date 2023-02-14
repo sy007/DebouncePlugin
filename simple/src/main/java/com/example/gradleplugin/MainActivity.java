@@ -2,9 +2,10 @@ package com.example.gradleplugin;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ExpandableListView;
+import android.widget.CheckBox;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +25,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        findViewById(R.id.cb).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LogUtil.d("CheckBox点击事件=>isCheck:" + ((CheckBox) view).isChecked());
+            }
+        });
         findViewById(R.id.btn_click_1).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -38,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         InnerClickListener innerClickListener = new InnerClickListener();
         findViewById(R.id.btn_click_7).setOnClickListener(innerClickListener);
         findViewById(R.id.btn_click_8).setOnClickListener(new InnerStaticClickListener());
-        Task.init(findViewById(R.id.ll_rootView), new View.OnClickListener() {
+        Task.init(findViewById(R.id.ll_rootView), findViewById(R.id.btn_click_8), new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 LogUtil.d("事件回调了");
@@ -90,16 +97,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LogUtil.d("ButterKnife设置onClick事件");
     }
 
-    //测试任意方法防抖功能
-    @ClickDeBounce
-    public void test() {
-
-    }
-
-    public void testAsmOnJDK9() {
-        String str = "hello world at" + System.currentTimeMillis();
-        LogUtil.d(str);
-    }
 
     /**
      * xml中设置的点击事件

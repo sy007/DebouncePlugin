@@ -33,10 +33,8 @@ android {
 
 
 debounce {
-    //debug为true时会有日志输出
-    isDebug = true
-    //两次点击相隔超过多长时间就认定为非抖动
-    checkTime = 500
+    //配置自定义hook类
+    proxyClassName = "com.example.gradleplugin.ClickMethodProxy"
     //输出修改报告
     generateReport = true
     //glob语法，类似于.gitignore 编写规则
@@ -45,30 +43,8 @@ debounce {
                 "androidx/**/*", //排除官方组件插桩
                 "android/**/*",  //排除官方组件插桩
                 "com/google/android/**/*", //排除官方组件插桩
-                "com/sunyuan/simple/lib/*",//排除simple-lib组件下的插桩,simple-lib通过aar引入已处理插桩
-                "butterknife/internal/DebouncingOnClickListener.class",//排除ButterKnife处理，ButterKnife事件防抖由includeForMethodAnnotation配置保证
+                "butterknife/internal/DebouncingOnClickListener.class",//排除ButterKnife处理，ButterKnife事件防抖由proxyClassName中的配置保证
                 "**/*_ViewBinding*.class"]
-    /**
-     * 方法级别白名单,声明在方法上的这些注解都会防抖
-     * 比如处理ButterKnife的OnClick和OnItemClick事件
-     * 注意:这里配置的是注解的字节码
-     */
-    includeForMethodAnnotation = ["Lbutterknife/OnClick;",
-                                  "Lbutterknife/OnItemClick;"]
-    /**
-     * 需要防抖的事件信息，即想要处理哪些事件防抖。
-     * 除了includeForMethodAnnotation方法级别白名单外，代码中只有匹配methodEntities声明的事件信息才会防抖。
-     * 注意:插件中默认添加了`View.OnClickListener#onClick`事件信息，所以如果只是处理View的OnClickListener事件防抖，不需要声明methodEntities并添加事件信息。
-     * 假如我们想处理`ListView#onItemClick`事件防抖，那么只在methodEntities声明`ListView#onItemClick`事件信息即可。
-     * 当然你还可以添加其他类型事件信息，比如`ExpandableListView#OnItemClickListener`事件信息。
-     */
-    methodEntities {
-        onItemClick {//随便填写，在methodEntities只要唯一,就像你在写productFlavors
-            methodName 'onItemClick'//方法名称
-            methodDesc '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V'//方法描述
-            interfaceName 'android/widget/AdapterView\$OnItemClickListener' //事件方法所在的接口名
-        }
-    }
 }
 
 repositories {
@@ -88,7 +64,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    implementation 'io.github.sy007:debounce-lib:1.2.0'
+    implementation 'io.github.sy007:debounce-lib:2.0.0'
 //    implementation project(":debounce-lib")
     implementation 'com.jakewharton:butterknife:10.2.3'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.3'

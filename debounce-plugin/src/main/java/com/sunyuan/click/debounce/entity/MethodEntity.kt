@@ -10,27 +10,33 @@ import java.io.Serializable
  */
 
 open class MethodEntity : Serializable {
-    @set:JvmName("methodName")
     var methodName: String = ""
 
-    @set:JvmName("methodDesc")
     var methodDesc: String = ""
 
-    @set:JvmName("interfaceName")
-    var interfaceName: String = ""
-
-    @set:JvmName("name")
-    var name: String = ""
-
-    constructor()
+    var owner: String = ""
 
     /**
      * lambda method access flags.
      */
-    @Transient
     var access: Int = -1
 
-    constructor(name: String) {
-        this.name = name
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MethodEntity) return false
+        if (owner != other.owner) return false
+        if (methodName != other.methodName) return false
+        if (methodDesc != other.methodDesc) return false
+        return true
     }
+
+    override fun hashCode(): Int {
+        var result = methodName.hashCode()
+        result = 31 * result + methodDesc.hashCode()
+        result = 31 * result + owner.hashCode()
+        return result
+    }
+
+    fun nameWithDesc() = methodName + methodDesc
+
 }

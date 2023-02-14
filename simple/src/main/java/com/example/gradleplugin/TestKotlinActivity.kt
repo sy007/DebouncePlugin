@@ -3,6 +3,7 @@ package com.example.gradleplugin
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.sunyuan.debounce.lib.BounceChecker
 
 class TestKotlinActivity : AppCompatActivity() {
 
@@ -14,10 +15,13 @@ class TestKotlinActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
         findViewById<View>(R.id.btn_click_1).setOnClickListener {
-            LogUtil.d("Kotlin点击事件")
+            LogUtil.d("Kotlin点击事件1")
         }
-        findViewById<View>(R.id.btn_click_2).setOnClickListener(onClick)
-        findViewById<View>(R.id.btn_click_3).setOnClickListener(this::instanceReferenceClick)
+        findViewById<View>(R.id.btn_click_2).setOnClickListener {
+            LogUtil.d("Kotlin点击事件2")
+        }
+        findViewById<View>(R.id.btn_click_3).setOnClickListener(onClick)
+        findViewById<View>(R.id.btn_click_4).setOnClickListener(this::instanceReferenceClick)
     }
 
     private fun instanceReferenceClick(view: View) {

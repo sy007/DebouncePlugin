@@ -3,6 +3,7 @@ package com.sunyuan.asm.test;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+
 /**
  * @author sy007
  * @date 2022/10/29

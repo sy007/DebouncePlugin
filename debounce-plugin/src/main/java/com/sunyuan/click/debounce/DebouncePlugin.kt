@@ -31,7 +31,7 @@ class DebouncePlugin : Plugin<Project> {
             ?: throw GradleException("$project is not an Android project")
         LogUtil.init(project.logger)
         val debounceEx =
-            project.extensions.create(EXTENSION_NAME, DebounceExtension::class.java, project)
+            project.extensions.create(EXTENSION_NAME, DebounceExtension::class.java)
         if (!project.enablePlugin) {
             LogUtil.warn("debounce-plugin is off.")
             return
@@ -42,10 +42,10 @@ class DebouncePlugin : Plugin<Project> {
             .registerTransform(DebounceTransform(project, debounceEx))
 
         project.afterEvaluate {
-            debounceExConfig(project)
-            classesTransformCompleteListener(project) {
+            project.debounceEx.init()
+            transformCompleteListener(project) {
                 if (!debounceEx.generateReport) {
-                    return@classesTransformCompleteListener
+                    return@transformCompleteListener
                 }
                 dump(project, it.name)
             }
@@ -53,15 +53,7 @@ class DebouncePlugin : Plugin<Project> {
     }
 
 
-    private fun debounceExConfig(project: Project) {
-        project.debounceEx.apply {
-            ConfigUtil.sDebug = this.isDebug
-            ConfigUtil.sCheckTime = this.checkTime
-            init()
-        }
-    }
-
-    private fun classesTransformCompleteListener(
+    private fun transformCompleteListener(
         project: Project,
         complete: (variant: BaseVariant) -> Unit
     ) {

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="debounce_view_lifecycle_mark" type="id" />
+    <item name="debounce_view_unique_id" type="id" />
+</resources>

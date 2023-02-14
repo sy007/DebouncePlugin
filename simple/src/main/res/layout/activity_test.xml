@@ -10,18 +10,24 @@
         android:id="@+id/btn_click_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Kotlin点击事件"
+        android:text="Kotlin点击事件1"
         android:textAllCaps="false" />
 
     <Button
         android:id="@+id/btn_click_2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Kotlin点击事件2"
+        android:textAllCaps="false" />
+    <Button
+        android:id="@+id/btn_click_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Kotlin高阶函数"
         android:textAllCaps="false" />
 
     <Button
-        android:id="@+id/btn_click_3"
+        android:id="@+id/btn_click_4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Kotlin Lambda实例方法引用"

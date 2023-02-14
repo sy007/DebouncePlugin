@@ -20,6 +20,7 @@ import butterknife.OnItemClick;
 
 public class ListViewActivity extends AppCompatActivity {
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,7 +40,7 @@ public class ListViewActivity extends AppCompatActivity {
     }
 
     @OnItemClick(R.id.lv_list)
-    void onItemClick(int position) {
+    void onItemClick(AdapterView<?> p0, int position) {
         LogUtil.d("ListView.onItemClick click" + position);
     }
 }

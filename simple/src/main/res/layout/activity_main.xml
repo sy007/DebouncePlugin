@@ -12,6 +12,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+
+        <CheckBox
+            android:id="@+id/cb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="checkBox点击事件" />
+
         <Button
             android:id="@+id/btn_click_1"
             android:layout_width="wrap_content"
@@ -133,11 +140,11 @@
             android:textAllCaps="false" />
 
         <Button
-            android:textAllCaps="false"
             android:id="@+id/btn_jump_to_lib"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="library中的点击防抖" />
+            android:text="library中的点击防抖"
+            android:textAllCaps="false" />
     </LinearLayout>
 
 </ScrollView>

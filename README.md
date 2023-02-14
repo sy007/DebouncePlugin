@@ -4,20 +4,35 @@ Android点击事件防抖动插件，主要为了解决项目以及第三方库�
 
 ## 1.支持以下功能：
 
-1. 支持application ,library project 中使用
+1. 支持application ,library 中使用
+
 2. 支持Java,Kotlin点击事件防抖
+
 3. 支持Java,Kotlin Lambda点击事件防抖
+
 4. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
+
 5. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
-6. 支持配置点击事件间隔，即指定时间内，只允许触发一次点击事件
+
 7. 支持多种类型的点击事件处理。例如：
    - ListView#onItemClick
    - ListView#onItemSelected
    - ExpandableListView#onGroupClick
    - ExpandableListView#onChildClick
    - ...只要你想处理，都支持。
-8. 支持xml设置的点击事件防抖
-9. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
+   
+7. 支持xml设置的点击事件防抖
+
+8. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
+
+9. 支持自定义防抖处理
+
+   1. 一段时间内，只允许触发一次点击事件，时间多久你说了算
+
+   2. 可以每个点击事件防抖状态唯一，也可以全局共享一个防抖状态
+   3. 支持运行时二次拦截处理
+   4. 甚至可以做到全局点击事件埋点
+
 10. 代码修改透明(插件对代码的修改会生成一个html报告)
 
 ## 2.如何使用
@@ -29,7 +44,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:1.2.0'
+        classpath 'io.github.sy007:debounce-plugin:2.0.0'
     }
 }
 
@@ -50,13 +65,17 @@ apply plugin: 'debounce-plugin'
 android{
    ...
 }
+//插件配置
+debounce {
+  proxyClassName = "$配置自定义代理类"
+}
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:1.2.0'
+    implementation 'io.github.sy007:debounce-lib:2.0.0'
 }
 ```
 
-这样插件就能正常工作了。无任何配置情况下，插件只会对全局所有onClick事件处理(项目，library,第三方jar和arr)。
+
 
 ## 3.自定义配置
 
@@ -64,72 +83,155 @@ dependencies {
 
 ```groovy
 debounce {
-    isDebug = true
-    checkTime = 500
+    proxyClassName = "$配置自定义代理类"
     generateReport = true
     includes = ["$填写需要事件防抖的目录或文件"]
     excludes = ["$填写不需要事件防抖的目录或文件"]
-    includeForMethodAnnotation = ["$填写需要事件防抖的方法上注解信息"]
     excludeForMethodAnnotation = ["$填写不需要事件防抖的方法上注解信息"]
- 		//需要防抖的事件信息
-    methodEntities {
-        xxxx {//随便填写，在methodEntities只要唯一,就像你在写productFlavors
-            methodName 'xxx'//方法名称
-            methodDesc 'xxxx'//方法描述
-            interfaceName 'xxxx' //事件方法所在的接口名
-        }
-    }
 }
 ```
 
-1. isDebug ： 为true时会有日志输出
+| 参数                       | 是否必须 |
+| -------------------------- | -------- |
+| proxyClassName             | 是       |
+| generateReport             | 否       |
+| includes                   | 否       |
+| excludes                   | 否       |
+| excludeForMethodAnnotation | 否       |
 
-2. checkTime：两次点击相隔超过多长时间就认定为非抖动，单位毫秒
+1. proxyClassName: 自定义代理类，其目的是为了配置hook信息。比如在你工程下创建`ClickMethodProxy.java`类。
 
-3. generateReport：是否生成方法修改报告，即插件修改的方法会生成一份html报告，报告路径:app/build/reports/debounce-plugin/${buildType}/modified-method-list.html
-
-4. includes： 处理指定路径下的代码事件防抖(文件级白名单),类似于.gitignore 编写规则
-
-5. excludes：排除指定路径下的代码事件防抖(文件级黑名单),类似于.gitignore 编写规则
-
-6. includeForMethodAnnotation: 方法级白名单, 方法上声明了这些注解，那么该方法会插入防抖代码。**注意:这里给includeForMethodAnnotation配置的是注解的字节码**
-
-   - 比如处理ButterKnife的OnClick和OnItemClick事件，方法上凡是声明了OnClick或OnItemClick注解都会插入防抖代码
-
-   ```groovy
-   includeForMethodAnnotation = ["Lbutterknife/OnClick;",
-                                     "Lbutterknife/OnItemClick;"]
+   ```java
+   package com.example.gradleplugin;
+   import android.view.View;
+   import android.widget.AdapterView;
+   import com.sunyuan.debounce.lib.BounceChecker;
+   import com.sunyuan.debounce.lib.ClickDeBounce;
+   import com.sunyuan.debounce.lib.AnnotationMethodProxy;
+   import com.sunyuan.debounce.lib.InterfaceMethodProxy;
+   import com.sunyuan.debounce.lib.MethodHookParam;
+   import butterknife.OnClick;
+   import butterknife.OnItemClick;
+   /**
+    * @author sy007
+    * @date 2023/01/17
+    * @description
+    */
+   public class ClickMethodProxy {
+   
+       /**
+        * 多长事件内只触发一次点击事件
+        */
+       private static final long CHECK_TIME = 1000;
+   
+       /**
+        * 防抖判断工具类
+        */
+       private final BounceChecker checker = new BounceChecker();
+   
+      /**
+        * 处理{@link View.OnClickListener#onClick(View)}点击事件防抖
+        * <p>
+        * 根据{@link InterfaceMethodProxy}注解上的配置，插件扫描到{@link View.OnClickListener#onClick(View)}时
+        * 会调用该方法，你可以从{@link MethodHookParam}中取出点击事件所属的类和方法名以及参数来做防抖判断
+        *
+        * @param param 事件方法描述
+        * @return 返回true表示拦截，false则不拦截
+        */
+       @InterfaceMethodProxy(
+               ownerType = View.OnClickListener.class,
+               methodName = "onClick",
+               parameterTypes = {View.class},
+               returnType = void.class)
+       public boolean onClickProxy(MethodHookParam param) {
+           /**
+            * {@link View.OnClickListener#onClick(View)}只有一个参数View，所以直接取
+            */
+           View view = (View) param.args[0];
+           boolean isBounce = checker.checkView(param.owner, param.methodName, view, CHECK_TIME);
+           LogUtil.d("onClickProxy=>" + param.owner + "|" + param.methodName + "|" + "isBounce:" + isBounce);
+           return isBounce;
+       }
+     
+     
+    	 /**
+        * 处理xml中设置的点击事件防抖
+        * <p>
+        * 根据{@link AnnotationMethodProxy}注解上的配置，插件扫描到声明{@link ClickDeBounce}注解的方法时
+        * 会调用该方法,你可以从{@link MethodHookParam}中取出点击事件所属的类和方法名以及参数来做防抖判断
+        * <p>
+        * 注意:{@link ClickDeBounce}注解必须声明在有切仅有一个View参数的方法上，这个注解是为了解决xml中设置的点击事件防抖
+        *
+        * @param param 事件方法描述
+        * @return 返回true表示拦截，false则不拦截
+        */
+       @AnnotationMethodProxy(type = ClickDeBounce.class)
+       public boolean onClickDeBounceAnnotationProxy(MethodHookParam param) {
+           /**
+            * {@link ClickDeBounce}声明在有切仅有一个View参数的方法上，所以直接取
+            */
+           View view = (View) param.args[0];
+           boolean isBounce = checker.checkView(param.owner, param.methodName, view, CHECK_TIME);
+           LogUtil.d("onClickDeBounceAnnotationProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+           return isBounce;
+       }
+   }
+   
    ```
 
-   - 插件内部默认添加了`ClickDeBounce`注解,即方法上声明了`ClickDeBounce`注解，都会插入防抖代码
+   那么`proxyClassName`填写就是`com.example.gradleplugin.ClickMethodProxy`,插件会根据`ClickMethodProxy`中的注解配置来决定hook哪些点击事件并调用这些方法。
 
-     ```kotlin
-      includeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/ClickDeBounce;")
-     ```
+   根据`ClickMethodProxy`代码中定义，插件提供两个注解:
 
-7. excludeForMethodAnnotation：方法级别黑名单,方法上声明了这些注解，那么该方法不会插入防抖代码。插件内部默认添加了` IgnoreClickDeBounce`注解，即声明在方法上的`IgnoreClickDeBounce`注解，都不会插入防抖代码。**注意:这里配置的是注解的字节码**
+   1. InterfaceMethodProxy: 配置需要hook的事件信息
+
+   ```java
+   @Target(ElementType.METHOD)
+   @Retention(RetentionPolicy.RUNTIME)
+   public @interface InterfaceMethodProxy {
+       //事件所属的接口类型
+       Class<?> ownerType();
+   
+       //事件所属的方法名
+       String methodName();
+   
+       //事件所属的方法参数列表类型
+       Class<?>[] parameterTypes();
+   
+       //事件方法的返回类型
+       Class<?> returnType();
+   }
+   ```
+
+   2. AnnotationMethodProxy: 配置需要hook的方法(**方法上声明AnnotationMethodProxy配置的注解，都会被hook**)
+
+   ```java
+   @Target(ElementType.METHOD)
+   @Retention(RetentionPolicy.RUNTIME)
+   public @interface AnnotationMethodProxy {
+       //注解类型
+       Class<? extends Annotation> type();
+   }
+   ```
+
+   **注意:自定义`ClickMethodProxy`中被InterfaceMethodProxy和AnnotationMethodProxy修饰的方法必须满足下面三个条件:**
+
+   - **非静态**
+   - **方法参数必须是MethodHookParam且只有一个参数**
+   - **返回值必须是boolean**
+
+2. generateReport：是否生成方法修改报告，即插件修改的方法会生成一份html报告，报告路径:app/build/reports/debounce-plugin/${buildType}/modified-method-list.html
+
+3. includes： 处理指定路径下的代码事件防抖(文件级白名单),类似于.gitignore 编写规则
+
+4. excludes：排除指定路径下的代码事件防抖(文件级黑名单),类似于.gitignore 编写规则
+
+5. excludeForMethodAnnotation：方法级别黑名单,方法上声明了这些注解，那么该方法不会插入防抖代码。插件内部默认添加了` IgnoreClickDeBounce`注解，即声明在方法上的`IgnoreClickDeBounce`注解，都不会插入防抖代码。**注意:这里配置的是注解的字节码**
 
    ```kotlin
+   //插件内部自动添加了IgnoreClickDeBounce注解
    excludeForMethodAnnotation.add("Lcom/sunyuan/debounce/lib/IgnoreClickDeBounce;")
    ```
-
-8. methodEntities :  需要防抖的事件信息，即想要处理哪些事件防抖。除了**includeForMethodAnnotation**方法级别白名单外，代码中只有匹配methodEntities声明的事件信息才会防抖。
-
-   **注意:插件中默认添加了`View.OnClickListener#onClick`事件信息，所以如果只是处理View的OnClickListener事件防抖，不需要声明methodEntities和添加事件信息。**
-
-   假如我们想处理`ListView#onItemClick`事件防抖，那么只在methodEntities声明`ListView#onItemClick`事件信息即可。当然你还可以添加其他类型事件信息。
-
-   ```groovy
-    methodEntities {
-        onItemClick {//随便填写，在methodEntities只要唯一,就像你在写productFlavors
-            methodName 'onItemClick'//方法名称
-            methodDesc '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V'//方法描述
-            interfaceName 'android/widget/AdapterView\$OnItemClickListener' //事件方法所在的接口名
-        }
-    }
-   ```
-
-   **注意:`methodEntities`中声明的事件信息都是事件的字节码信息**
 
 ## 4.运行说明
 
@@ -138,9 +240,8 @@ debounce {
   ```json
 ------------------debounce plugin config info--------------------
 {
-    "isDebug": true,
     "generateReport": true,
-    "checkTime": 500,
+    "proxyClassName": "com.example.gradleplugin.ClickMethodProxy",
     "includes": [
         
     ],
@@ -148,30 +249,67 @@ debounce {
         "com/example/gradleplugin/excludes/*",
         "androidx/**/*",
         "android/**/*",
-        "com/google/android/**/*"
-    ],
-    "includeForMethodAnnotation": [
-        "Lbutterknife/OnClick;",
-        "Lbutterknife/OnItemClick;",
-        "Lcom/sunyuan/debounce/lib/ClickDeBounce;"
+        "com/google/android/**/*",
+        "butterknife/internal/DebouncingOnClickListener.class",
+        "**/*_ViewBinding*.class"
     ],
     "excludeForMethodAnnotation": [
         "Lcom/sunyuan/debounce/lib/IgnoreClickDeBounce;"
-    ],
-    "methodEntities": {
-        "onItemClick": {
-            "access": -1,
-            "methodDesc": "(Landroid/widget/AdapterView;Landroid/view/View;IJ)V",
-            "interfaceName": "android/widget/AdapterView$OnItemClickListener",
-            "name": "onItemClick",
-            "methodName": "onItemClick"
-        }
-    }
+    ]
 }
 -----------------------------------------------------------------
   ```
 
-运行apk或执行  `./gradlew clean`  `./gradlew  assembleDebug` 控制台输出插件执行耗时以及报告地址:
+运行apk或执行  `./gradlew clean`  `./gradlew  assembleDebug` 
+
+在执行过程中控制台会输出自定义代理类解析后的hook信息
+
+```json
+------------------proxy class config info--------------------
+{
+    "owner": "com/example/gradleplugin/ClickMethodProxy",
+    "annotationIndex": {
+        "Lcom/sunyuan/debounce/lib/ClickDeBounce;": {
+            "methodDesc": "(Lcom/sunyuan/debounce/lib/MethodHookParam;)Z",
+            "methodName": "onClickDeBounceAnnotationProxy"
+        },
+        "Lbutterknife/OnItemClick;": {
+            "methodDesc": "(Lcom/sunyuan/debounce/lib/MethodHookParam;)Z",
+            "methodName": "onItemClickWithButterKnifeProxy"
+        },
+        "Lbutterknife/OnClick;": {
+            "methodDesc": "(Lcom/sunyuan/debounce/lib/MethodHookParam;)Z",
+            "methodName": "onClickWithButterKnifeProxy"
+        }
+    },
+    "methodIndex": [
+        {
+            "samMethodEntity": {
+                "owner": "android/view/View$OnClickListener",
+                "methodDesc": "(Landroid/view/View;)V",
+                "methodName": "onClick"
+            },
+            "proxyMethodEntity": {
+                "methodDesc": "(Lcom/sunyuan/debounce/lib/MethodHookParam;)Z",
+                "methodName": "onClickProxy"
+            }
+        },
+        {
+            "samMethodEntity": {
+                "owner": "android/widget/AdapterView$OnItemClickListener",
+                "methodDesc": "(Landroid/widget/AdapterView;Landroid/view/View;IJ)V",
+                "methodName": "onItemClick"
+            },
+            "proxyMethodEntity": {
+                "methodDesc": "(Lcom/sunyuan/debounce/lib/MethodHookParam;)Z",
+                "methodName": "onItemClickProxy"
+            }
+        }
+    ]
+}
+```
+
+插件执行完毕后控制台输出插件执行耗时以及修改报告地址:
 
 ```java
 > Task :app:transformClassesWithDebounceTransformForDebug
@@ -190,30 +328,32 @@ debounce-transform-report:xxx/app/build/reports/debounce-plugin/debug/modified-m
 
 Demo运行起来后，点击页面上的按钮如图所示:
 
-![image](http://m.qpic.cn/psc?/V51CSwpO1slVFI402aSY2YlJCy2S2DcR/bqQfVz5yrrGYSXMvKr.cqePcXuEw9lvqRGaaW*a*RiJ*aeD0x.m8m5uh2VEoSmXfM2XcpnwnYULiALIHhrRryZaHBtm.1*NLBaknbtXsofQ!/b&bo=3grwBd4K8AUDByI!&rf=viewer_4)
+![image](http://m.qpic.cn/psc?/V11vVsP84HfNn2/bqQfVz5yrrGYSXMvKr.cqYpqJxqZga9c8eRhMoRWXwHxrrSsyw*fZlgaKBa76ZLChc7DBNiVUQG1NL3wYexkfna5GwRPuhxhkk*cEm4Ena4!/b&bo=6AooBugKKAYDByI!&rf=viewer_4)
 
 ## 5.FAQ
 
-### 5.1 插件提供了include, exclude,includeForMethodAnnotation和excludeForMethodAnnotation，他们在事件防抖功能中起到什么作用，以及他们之间的优先级是怎样的？
+### 5.1 插件提供了include, exclude和excludeForMethodAnnotation，他们在事件防抖中起到什么作用，以及他们之间的优先级是怎样的？
 
 #### 5.1.1 背景
 
-插件提供`include`，`exclude`，`includeForMethodAnnotation`和`excludeForMethodAnnotation` 主要解决事件防抖个性化的场景，不是每个app都需要全局处理事件防抖。
+插件提供`include`，`exclude`，和`excludeForMethodAnnotation` 主要解决事件防抖个性化的场景，不是每个应用都需要处理全局事件防抖。
 
-于是有了`include`和`exclude`用于处理或排除文件级别的事件防抖。那还有一种场景是某个方法不需要防抖，于是插件提供了,`includeForMethodAnnotation`和`excludeForMethodAnnotation`用于处理或排除方法级别的防抖。
+于是有了`include`和`exclude`用于处理或排除文件级别的事件防抖。那还有一种场景是某个方法不需要防抖，于是插件提供了`excludeForMethodAnnotation`排除方法级别的防抖。
 
 #### 5.1.2 优先级
 
-`exclude`优先级高于`include`；`excludeForMethodAnnotation`优先级高于`includeForMethodAnnotation`。
+`exclude`优先级高于`include`
+
+`include`优先级高于`excludeForMethodAnnotation`
 
 分为两个步骤:
 
 1. 插件执行时会遍历所有class文件，根据`exclude`的配置排除某些class文件处理，剩余的class文件再根据`include`配置判断是否需要处理
-2. 第一步结束后会得到需要处理的class文件，然后遍历每一个class的method列表，通过`excludeForMethodAnnotation`的配置排除某个方法处理，剩余的method再根据`includeForMethodAnnotation`配置判断是否需要处理
+2. 第一步结束后会得到需要处理的class文件，然后遍历每一个class的method列表，通过`excludeForMethodAnnotation`的配置排除某个方法
 
 ### 5.2 为什么修改了debounce配置没有生效?
 
-修改debounce任何配置都需要Build->clean Project，然后在运行项目。否则新修改的配置不会生效
+修改debounce任何配置都需要Build->clean Project，然后在运行项目，否则新修改的配置不会生效
 
 ### 5.3 为什么生成的报告不全？
 
@@ -242,7 +382,7 @@ debounce-plugin is off.
 
 ### 5.6 如何对ButterKnife等三方APT设置的点击事件防抖处理？
 
-APT会生成模版类，在模版类中依然使用的是原生的点击事件。既然是原生的点击事件，那插件根据`methodEntities`配置信息就能处理，为什么还要说明下**如何对ButterKnife等三方APT设置的点击事件防抖处理**呢？
+APT会生成模版类，在模版类中依然使用的是原生的点击事件。既然是原生的点击事件，那插件根据自定义`ClickMethodProxy.java`中配置信息就能处理，为什么还要说明下**如何对ButterKnife等三方APT设置的点击事件防抖处理呢？**
 
 假设项目中使用了`ButterKnife`,只想对主工程下的代码事件防抖，其他模块下的不处理。按照插件配置规则需要配置`include[$主工程代码路径]`。插件根据include配置的路径筛选出处理的class时
 
@@ -284,21 +424,92 @@ public abstract class DebouncingOnClickListener implements View.OnClickListener 
 
 ```groovy
 debounce {
+    proxyClassName = "com.example.gradleplugin.ClickMethodProxy"
     includes = [$主工程代码路径]
     /**
      * 排除ButterKnife生成的模版类
-     * ButterKnife事件防抖由includeForMethodAnnotation保证
+     * ButterKnife事件防抖由自定义`ClickMethodProxy.java`中的配置保证
      */
     excludes = ["**/*_ViewBinding*.class"]
-
-    /**
-     * 声明在方法上的的这些注解都需要插桩
-     * 比如处理ButterKnife OnClick和OnItemClick点击事件
-     */
-    includeForMethodAnnotation = ["Lbutterknife/OnClick;",
-                                  "Lbutterknife/OnItemClick;"]
 }
 ```
+
+```java
+package com.example.gradleplugin;
+import android.view.View;
+import com.sunyuan.debounce.lib.BounceChecker;
+import com.sunyuan.debounce.lib.AnnotationMethodProxy;
+import com.sunyuan.debounce.lib.MethodHookParam;
+import butterknife.OnClick;
+import butterknife.OnItemClick;
+/**
+ * @author sy007
+ * @date 2023/01/17
+ * @description
+ */
+public class ClickMethodProxy {
+    /**
+     * 多长事件内只触发一次点击事件
+     */
+    private static final long CHECK_TIME = 1000;
+
+    /**
+     * 防抖判断工具类
+     */
+    private final BounceChecker checker = new BounceChecker();
+
+    /**
+     * 处理ButterKnife OnItemClick点击事件防抖
+     * <p>
+     * 根据{@link AnnotationMethodProxy}注解上的配置，插件扫描到声明{@link OnItemClick}注解的方法时
+     * 会调用该方法,你可以从{@link MethodHookParam}中取出点击事件所属的类和方法名以及参数来做防抖判断
+     * <p>
+     * 注意:{@link OnItemClick}属于ButterKnife中的注解，在使用时方法参数可以写，也可以不写，甚至不写全都行
+     * 所以这里生成点击事件唯一标识只能拼接方法所属的类+方法名+方法参数{@link MethodHookParam#generateUniqueId()}
+     *
+     * @param param 事件方法描述
+     * @return 返回true表示拦截，false则不拦截
+     */
+    @AnnotationMethodProxy(type = OnItemClick.class)
+    public boolean onItemClickWithButterKnifeProxy(MethodHookParam param) {
+        boolean isBounce = checker.checkAny(param.generateUniqueId(), CHECK_TIME);
+        LogUtil.d("onItemClickWithButterKnifeProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+        return isBounce;
+    }
+
+    /**
+     * 处理ButterKnife OnClick点击事件防抖
+     * <p>
+     * 根据{@link AnnotationMethodProxy}注解上的配置，插件扫描到声明{@link OnClick}注解的方法时
+     * 会调用该方法,你可以从{@link MethodHookParam}中取出点击事件所属的类和方法名以及参数来做防抖判断
+     * <p>
+     * 注意:{@link OnClick}属于ButterKnife中的注解，在使用时方法参数可以写，也可以不写
+     * <p>
+     * 所以这里生成点击事件唯一标识的逻辑是事件方法的参数判断:
+     * <p>
+     * 有一个参数这个参数就是{@link View}调用{@link BounceChecker#checkView(String, String, View, long)}就可以了，
+     * 没有参数调用{@link BounceChecker#checkAny(String, long)}
+     *
+     * @param param 事件方法描述
+     * @return 返回true表示拦截，false则不拦截
+     */
+    @AnnotationMethodProxy(type = OnClick.class)
+    public boolean onClickWithButterKnifeProxy(MethodHookParam param) {
+        boolean isBounce;
+        if (param.args.length != 0) {
+            isBounce = checker.checkView(param.owner, param.methodName, (View) param.args[0], CHECK_TIME);
+        } else {
+            isBounce = checker.checkAny(param.generateUniqueId(), CHECK_TIME);
+        }
+        LogUtil.d("onClickWithButterKnifeProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+        return isBounce;
+    }
+}
+
+
+```
+
+
 
 ### 5.7 如何对xml中设置的点击事件防抖处理？
 
@@ -310,15 +521,7 @@ debounce {
 
 #### 5.7.2 处理
 
-5.6.1中描述了xml中设置的点击事件防抖处理原理，一般情况下无需配置，插件已帮你处理了。但是如果事件防抖处理有严格的规则，即如果只想处理主工程下的事件的防抖，那么这种情况下就需要特殊配置了,和ButterKnife处理类似。
-
-```groovy
-debounce {
-    includes = [$主工程代码路径]
-}
-```
-
-**注意:和`ButterKnife`处理不同的是无需声明`includeForMethodAnnotation`注解，插件内部默认添加了`ClickDeBounce`注解。所以在xml中声明的点击事件方法上添加`ClickDeBounce`注解就可以了**
+5.6.1中描述了xml中设置的点击事件防抖处理原理，一般情况下无需配置，插件已帮你处理了。但是如果事件防抖处理有严格的规则。如果只想处理主工程下的事件的防抖，那么这种情况下就需要特殊配置了,和ButterKnife处理类似。
 
 ```java
 /**
@@ -328,6 +531,63 @@ debounce {
 public void reflectOnClick(View view) {
     LogUtil.d("xml设置onClick事件");
 }
+```
+
+```groovy
+//插件配置
+debounce {
+    proxyClassName = "com.example.gradleplugin.ClickMethodProxy"
+    includes = [$主工程代码路径]
+}
+```
+
+```java
+package com.example.gradleplugin;
+import android.view.View;
+import com.sunyuan.debounce.lib.BounceChecker;
+import com.sunyuan.debounce.lib.AnnotationMethodProxy;
+import com.sunyuan.debounce.lib.ClickDeBounce;
+import com.sunyuan.debounce.lib.MethodHookParam;
+/**
+ * @author sy007
+ * @date 2023/01/17
+ * @description
+ */
+public class ClickMethodProxy {
+
+    /**
+     * 多长事件内只触发一次点击事件
+     */
+    private static final long CHECK_TIME = 1000;
+
+    /**
+     * 防抖判断工具类
+     */
+    private final BounceChecker checker = new BounceChecker();
+
+    /**
+     * 处理xml中设置的点击事件防抖
+     * <p>
+     * 根据{@link AnnotationMethodProxy}注解上的配置，插件扫描到声明{@link ClickDeBounce}注解的方法时
+     * 会调用该方法,你可以从{@link MethodHookParam}中取出点击事件所属的类和方法名以及参数来做防抖判断
+     * <p>
+     * 注意:{@link ClickDeBounce}注解必须声明在有切仅有一个View参数的方法上，这个注解是为了解决xml中设置的点击事件防抖
+     *
+     * @param param 事件方法描述
+     * @return 返回true表示拦截，false则不拦截
+     */
+    @AnnotationMethodProxy(type = ClickDeBounce.class)
+    public boolean onClickDeBounceAnnotationProxy(MethodHookParam param) {
+        /**
+         * {@link ClickDeBounce}声明在有且仅有一个View参数的方法上，所以直接取
+         */
+        View view = (View) param.args[0];
+        boolean isBounce = checker.checkView(param.owner, param.methodName, view, CHECK_TIME);
+        LogUtil.d("onClickDeBounceAnnotationProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+        return isBounce;
+    }
+}
+
 ```
 
 ### 5.8 如何排除某个事件方法防抖处理？
@@ -344,9 +604,58 @@ findViewById(R.id.btn_ignore_click_debounce).setOnClickListener(new View.OnClick
 });
 ```
 
+### 5.9 运行时二次拦截呢？
 
+这个功能源自于一位老哥的反馈
+
+![](http://photogz.photo.store.qq.com/psc?/V11vVsP84HfNn2/bqQfVz5yrrGYSXMvKr.cqQbTJqTscVPZ7nnrNG8dvTUxjuqR0GHINQfY**t3p13gOqQkpdOLyzsJcimqj2.J9C5xoB*9jRrgYdW.9xfMlek!/b&bo=ZgiAAmYIgAIDByI!&rf=viewer_4)
+
+CheckBox显示状态和点击事件处理时获取的状态不一致。用户快速点击两次，页面上CheckBox从未选中状态->选中状态->未选中状态。而点击事件只执行了一次。此时点击事件中只执行了选中状态的事件。
+
+这种情况如何处理呢？
+
+很简单，只需在自定义代理类中代理onClick的方法中过滤掉CheckBox的防抖处理即可
+
+```java
+@InterfaceMethodProxy(
+  ownerType = View.OnClickListener.class,
+  methodName = "onClick",
+  parameterTypes = {View.class},
+  returnType = void.class)
+public boolean onClickProxy(MethodHookParam param) {
+  /**
+  * {@link View.OnClickListener#onClick(View)}只有一个参数View，所以直接取
+  */
+  if (param.args[0] instanceof CheckBox) {
+    //解决给CheckBox设置点击事件时页面显示状态和事件处理状态不一致问题，这里对CheckBox就不防抖处理了。
+    return false;
+  }
+  View view = (View) param.args[0];
+  boolean isBounce = checker.checkView(param.owner, param.methodName, view, CHECK_TIME);
+  LogUtil.d("onClickProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+  return isBounce;
+}
+```
 
 ## 6.更新日志
+
+## 2.0.0
+
+1. 插件底层逻辑重构
+
+2. 支持自定义防抖处理
+
+3. 移除插件配置:
+
+   1. isDebug 
+
+   2. checkTime
+
+   3. includeForMethodAnnotation 
+
+   4. methodEntities 
+
+      **以上被移除的配置，所表示的功能由自定义代理类代替**
 
 ## 1.2.0
 

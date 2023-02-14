@@ -1,4 +1,6 @@
 import com.sunyuan.click.debounce.entity.MethodEntity
+import com.sunyuan.click.debounce.entity.MethodMapperEntity
+import com.sunyuan.click.debounce.entity.ProxyClassEntity
 import com.sunyuan.click.debounce.utils.*
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Handle
@@ -14,20 +16,16 @@ import java.util.concurrent.ConcurrentHashMap
  *    version: 1.0
  */
 class ClickMethodVisitor(
+    private val proxyClassEntity: ProxyClassEntity,
     private val nextClassVisitor: ClassVisitor,
-    private val hookMethodEntities: Map<String, MethodEntity>,
-    private val includeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean,
+    private val hookMethodEntities: MutableSet<MethodEntity>,
     private val excludeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean,
     private val collectImplTargetInterfaces: (name: String) -> Set<String>
 ) : ClassNode(Opcodes.ASM7) {
     private lateinit var implTargetInterfaces: Set<String>
+
     override fun visitEnd() {
         super.visitEnd()
-        if (name == ConfigUtil.sOwner) {
-            BounceCheckerModifyUtil.modify(methods)
-            accept(nextClassVisitor)
-            return
-        }
         implTargetInterfaces = collectImplTargetInterfaces(name)
         methods.filter {
             !excludeMethodOfAnnotation(it.visibleAnnotations)
@@ -36,21 +34,19 @@ class ClickMethodVisitor(
             collectMethodOfImplInterface(methodNode)
             collectMethodOfLambda(methodNode)
         }
-        ClickMethodModifyUtil.modify(this)
+        ClickMethodModifyUtil.modify(this, proxyClassEntity)
         accept(nextClassVisitor)
     }
 
 
     private fun collectMethodOfAnnotation(methodNode: MethodNode) {
-        if (!includeMethodOfAnnotation(methodNode.visibleAnnotations)) {
+        val annotationDesc = includeMethodOfAnnotation(methodNode.visibleAnnotations)
+        if (annotationDesc.isNullOrEmpty()) {
             return
         }
         if (methodNode.access and Opcodes.ACC_STATIC != 0) {
-            val annotations = methodNode.visibleAnnotations?.map {
-                it.desc
-            }.toString()
-            throw  IllegalStateException(
-                "$annotations decorated method cannot be static. (${
+            throw IllegalStateException(
+                "$annotationDesc decorated method cannot be static. (${
                     name.replace(
                         "/",
                         "."
@@ -58,18 +54,42 @@ class ClickMethodVisitor(
                 }.${methodNode.name + methodNode.desc})"
             )
         }
-        record(name, methodNode.name, methodNode.desc)
+        if (HookManager.sClickDeBounceDesc == annotationDesc && (methodNode.localVariables.size != 2 || methodNode.localVariables.find { HookManager.sViewDesc == it.desc } == null)) {
+            throw  IllegalStateException(
+                "$annotationDesc decorated method , method parameter must have only one [Landroid/view/View] parameter. (${
+                    name.replace(
+                        "/",
+                        "."
+                    )
+                }.${methodNode.name + methodNode.desc})"
+            )
+        }
+        val proxyMethodEntity = proxyClassEntity.annotationIndex[annotationDesc]!!
+        val methodEntity = MethodEntity().apply {
+            this.methodName = methodNode.name
+            this.methodDesc = methodNode.desc
+        }
+        val mapperEntity = MethodMapperEntity(methodEntity, proxyMethodEntity)
+        record(name, mapperEntity)
     }
 
     private fun collectMethodOfImplInterface(methodNode: MethodNode) {
         if (implTargetInterfaces.isEmpty()) {
             return
         }
-        val methodEntity = hookMethodEntities[methodNode.name + methodNode.desc]
-        if (methodEntity != null && implTargetInterfaces.contains(methodEntity.interfaceName)
-            && methodEntity.methodName == methodNode.name && methodEntity.methodDesc == methodNode.desc
-        ) {
-            record(name, methodNode.name, methodNode.desc)
+        val samMethodEntity = hookMethodEntities.find {
+            it.nameWithDesc() == methodNode.name + methodNode.desc
+        }
+        if (samMethodEntity != null && implTargetInterfaces.contains(samMethodEntity.owner)) {
+            proxyClassEntity.findProxyMethodEntity(samMethodEntity)?.apply {
+                val mapper = MethodMapperEntity(MethodEntity().apply {
+                    this.methodName = methodNode.name
+                    this.methodDesc = methodNode.desc
+                }, this).apply {
+                    this.samMethodEntity = samMethodEntity
+                }
+                record(name, mapper)
+            }
         }
     }
 
@@ -89,7 +109,7 @@ class ClickMethodVisitor(
              * 2.JDK 11 动态常量使用inDy指令;此时bsm.owner=java/lang/invoke/ConstantBootstraps
              * 3.JDK 17 switch的模式匹配使用inDy指令;此时bsm.owner=java/lang/runtime/SwitchBootstraps
              */
-            if (ConfigUtil.LambdaBSMOwner != node.bsm.owner) {
+            if ("java/lang/invoke/LambdaMetafactory" != node.bsm.owner) {
                 continue
             }
             val desc: String = node.desc
@@ -105,28 +125,31 @@ class ClickMethodVisitor(
             val samMethodType = bsmArgs[0] as Type
             //脱糖后的方法，从Handle中取出该方法的信息
             val handle: Handle = bsmArgs[1] as Handle
-            val hookMethodIterator = hookMethodEntities.iterator()
-            while (hookMethodIterator.hasNext()) {
-                val methodEntity = hookMethodIterator.next().value
-                if (methodEntity.interfaceName == samBase &&
-                    methodEntity.methodName == samMethodName &&
-                    methodEntity.methodDesc == samMethodType.descriptor
-                ) {
-                    record(handle.owner, handle.name, handle.desc, handle.tag)
-                    break
+            hookMethodEntities.find {
+                it.owner == samBase && it.methodName == samMethodName && it.methodDesc == samMethodType.descriptor
+            }?.let { samMethodEntity ->
+                proxyClassEntity.findProxyMethodEntity(samMethodEntity)?.apply {
+                    val mapper = MethodMapperEntity(MethodEntity().apply {
+                        this.methodName = handle.name
+                        this.methodDesc = handle.desc
+                        this.access = handle.tag
+                    }, this).apply {
+                        this.samMethodEntity = samMethodEntity
+                    }
+                    record(name, mapper)
                 }
             }
         }
     }
 
-    private fun includeMethodOfAnnotation(annotationNodes: List<AnnotationNode>?): Boolean {
+    private fun includeMethodOfAnnotation(annotationNodes: List<AnnotationNode>?): String? {
         return kotlin.run {
             annotationNodes?.forEach {
-                if (includeMethodOfAnnotation(it)) {
-                    return@run true
+                if (HookManager.sProxyClassEntity?.annotationIndex?.containsKey(it.desc) == true) {
+                    return@run it.desc
                 }
             }
-            return@run false
+            return@run null
         }
     }
 
@@ -141,16 +164,15 @@ class ClickMethodVisitor(
         }
     }
 
-    private fun record(name: String, methodName: String, methodDes: String, access: Int = -1) {
-        var methodEntities = MethodUtil.sModifyOfMethods[name]
+    private fun record(
+        name: String,
+        mapperEntity: MethodMapperEntity,
+    ) {
+        var methodEntities = HookManager.sModifyOfMethods[name]
         if (methodEntities == null) {
             methodEntities = ConcurrentHashMap()
-            MethodUtil.sModifyOfMethods[name] = methodEntities
+            HookManager.sModifyOfMethods[name] = methodEntities
         }
-        methodEntities[methodName + methodDes] = MethodEntity().apply {
-            this.access = access
-            this.methodName = methodName
-            this.methodDesc = methodDes
-        }
+        methodEntities[mapperEntity.methodEntity.nameWithDesc()] = mapperEntity
     }
 }

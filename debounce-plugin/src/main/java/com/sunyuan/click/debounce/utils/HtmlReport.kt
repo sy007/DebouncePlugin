@@ -1,12 +1,9 @@
 package com.sunyuan.click.debounce.utils
 
 import com.didiglobal.booster.kotlinx.touch
-import com.sunyuan.click.debounce.entity.MethodEntity
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 /**
  * @author sy007
@@ -27,9 +24,9 @@ class HtmlReport {
 
     fun dump(file: File) {
         val sb = StringBuffer()
-        val classesCount = MethodUtil.sModifyOfMethods.keys.size
+        val classesCount = HookManager.sModifyOfMethods.keys.size
         var methodCount = 0
-        MethodUtil.sModifyOfMethods.forEach { entry ->
+        HookManager.sModifyOfMethods.forEach { entry ->
             methodCount += entry.value.size
             sb.append(generatorPre(entry.key, entry.value.keys))
         }
@@ -40,7 +37,7 @@ class HtmlReport {
             )
         )
         file.touch().writeText(getHtml())
-        MethodUtil.sModifyOfMethods.clear()
+        HookManager.sModifyOfMethods.clear()
         LogUtil.warn("--------------------------------------------------------")
         LogUtil.warn("$TITLE:${file.absolutePath}")
         LogUtil.warn("--------------------------------------------------------")

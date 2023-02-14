@@ -1,12 +1,16 @@
 package com.sunyuan.asm.test;
 
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.ParameterNode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +53,7 @@ public class ASMTest {
                             System.out.println("interfaceName=" + samBase);
                             System.out.println("methodName=" + samMethodName);
                             System.out.println("methodDes=" + samMethodType.getDescriptor());
+                            System.out.println("handle=" + handle.getName() + handle.getDesc());
                         }
                     }
                 }
@@ -57,6 +62,7 @@ public class ASMTest {
             e.printStackTrace();
         }
     }
+
 
     public static String getClassFilePath(Class clazz) {
         String buildDir = clazz.getProtectionDomain().getCodeSource().getLocation().getFile();

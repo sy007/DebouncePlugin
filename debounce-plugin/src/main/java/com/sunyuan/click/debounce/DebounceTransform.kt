@@ -7,14 +7,16 @@ import com.android.build.api.transform.*
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.didiglobal.booster.kotlinx.NCPU
+import com.sunyuan.click.debounce.entity.MethodEntity
+import com.sunyuan.click.debounce.entity.ProxyClassEntity
 import com.sunyuan.click.debounce.extension.DebounceExtension
 import com.sunyuan.click.debounce.utils.*
+import com.sunyuan.click.debounce.visitor.ProxyClassVisitor
 import org.gradle.api.Project
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.*
 import java.io.File
-import java.io.IOException
 import java.net.URLClassLoader
+import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +33,10 @@ open class DebounceTransform(
     private val project: Project,
     private val debounceEx: DebounceExtension
 ) : Transform() {
+    private lateinit var proxyClassEntity: ProxyClassEntity
+    private lateinit var hookInterfaces: MutableSet<String>
+    private lateinit var hookMethodEntities: MutableSet<MethodEntity>
+
     private val findImplTargetInterfaceHelper = FindImplTargetInterfaceHelper()
 
     override fun getName(): String {
@@ -53,12 +59,19 @@ open class DebounceTransform(
         }
     }
 
+    override fun getReferencedScopes(): MutableSet<in QualifiedContent.Scope> {
+        return when {
+            project.isApp -> TransformManager.SCOPE_FULL_PROJECT
+            project.isLibrary -> TransformManager.PROJECT_ONLY
+            else -> TODO("Not an Android project")
+        }
+    }
+
     override fun transform(transformInvocation: TransformInvocation) {
         super.transform(transformInvocation)
-        MethodUtil.sModifyOfMethods.clear()
-        project.debounceEx.clear()
-        val startTime: Long = System.currentTimeMillis()
+        clear()
 
+        val executor = Executors.newFixedThreadPool(NCPU)
         val inputs = transformInvocation.inputs
         val outputProvider = transformInvocation.outputProvider
         val isIncremental = transformInvocation.isIncremental
@@ -66,7 +79,7 @@ open class DebounceTransform(
             //如果不支持增量更新。
             outputProvider.deleteAll()
         }
-        val executor = Executors.newFixedThreadPool(NCPU)
+        val startTime: Long = System.currentTimeMillis()
 
         val urlClassLoader: URLClassLoader = ClassLoaderHelper.getClassLoader(
             inputs,
@@ -74,11 +87,27 @@ open class DebounceTransform(
             project.getAndroid<BaseExtension>().bootClasspath
         )
         findImplTargetInterfaceHelper.setUrlClassLoader(urlClassLoader)
+        urlClassLoader.getResourceAsStream("${debounceEx.proxyClassName.replace(".", "/")}.class")
+            ?.use {
+                it.readBytes()
+            }?.run {
+                ClassReader(this)
+            }?.accept(ProxyClassVisitor(), 0)
+        val proxyClassEntity = HookManager.sProxyClassEntity
+        if (proxyClassEntity == null) {
+            LogUtil.warn("proxyClassEntity is null,${debounceEx.proxyClassName} create or not?")
+            return
+        }
+
+        this.proxyClassEntity = proxyClassEntity
+        this.hookInterfaces = HookManager.sHookInterfaces
+        this.hookMethodEntities = HookManager.sHookMethodEntities
+
         try {
-            inputs.map {
+            inputs.asSequence().map {
                 it.jarInputs + it.directoryInputs
             }.flatten().map { input ->
-                executor.submit {
+                executor.submit(Callable {
                     when (input) {
                         is DirectoryInput -> transformDirInput(
                             input,
@@ -87,23 +116,24 @@ open class DebounceTransform(
                         )
                         is JarInput -> transformJar(input, outputProvider, isIncremental)
                     }
-                }
+                })
             }.forEach {
                 it.get()
             }
-        } catch (e: Exception) {
-            e.throwRealException()
         } finally {
             executor.shutdown()
             executor.awaitTermination(1, TimeUnit.HOURS)
-            urlClassLoader.use {
-                it.close()
-            }
         }
+
         LogUtil.warn("--------------------------------------------------------")
         val costTime: Long = System.currentTimeMillis() - startTime
         LogUtil.warn("DebounceTransform" + " cost " + costTime + "ms")
         LogUtil.warn("--------------------------------------------------------")
+    }
+
+    private fun clear() {
+        HookManager.sProxyClassEntity = null
+        HookManager.sModifyOfMethods.clear()
     }
 
     private fun transformDirInput(
@@ -197,25 +227,20 @@ open class DebounceTransform(
 
 
     private fun transform(canonicalName: String, bytes: ByteArray): ByteArray =
-        if (DebounceExtension.matchClassPath(
-                canonicalName,
-                debounceEx.includes,
-                debounceEx.excludes
-            )
-        ) {
+        if (debounceEx.matchClassPath(canonicalName)) {
             val cr = ClassReader(bytes)
             val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-            val implTargetInterfaces = mutableSetOf<String>()
-            val clickClassVisitor = ClickMethodVisitor(cw,
-                hookMethodEntities = debounceEx.hookMethodEntities,
-                includeMethodOfAnnotation = {
-                    debounceEx.includeForMethodAnnotation.contains(it.desc)
-                }, excludeMethodOfAnnotation = {
+            val clickClassVisitor = ClickMethodVisitor(
+                proxyClassEntity,
+                cw,
+                hookMethodEntities = hookMethodEntities,
+                excludeMethodOfAnnotation = {
                     debounceEx.excludeForMethodAnnotation.contains(it.desc)
                 }, { name ->
+                    val implTargetInterfaces = mutableSetOf<String>()
                     findImplTargetInterfaceHelper.find(
                         name,
-                        debounceEx.hookInterfaces,
+                        hookInterfaces,
                         implTargetInterfaces
                     )
                     implTargetInterfaces
@@ -225,19 +250,4 @@ open class DebounceTransform(
         } else {
             bytes
         }
-
-    private fun Exception.throwRealException() {
-        when (cause) {
-            is IOException -> {
-                throw cause as IOException
-            }
-            is RuntimeException -> {
-                throw cause as RuntimeException
-            }
-            is Error -> {
-                throw cause as Error
-            }
-            else -> throw  RuntimeException(cause)
-        }
-    }
 }
