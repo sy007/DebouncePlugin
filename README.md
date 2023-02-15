@@ -44,7 +44,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.0.0'
+        classpath 'io.github.sy007:debounce-plugin:2.0.1'
     }
 }
 
@@ -71,7 +71,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.0.0'
+    implementation 'io.github.sy007:debounce-lib:2.0.1'
 }
 ```
 
@@ -642,7 +642,11 @@ public boolean onClickProxy(MethodHookParam param) {
 
 ## 6.更新日志
 
-## 2.0.0
+### 2.0.1
+
+1. 修复编译期Invalid stack map table问题 [#10](https://github.com/sy007/DebouncePlugin/issues/10#issuecomment-1430955462)
+
+### 2.0.0
 
 1. 插件底层逻辑重构
 
@@ -660,19 +664,19 @@ public boolean onClickProxy(MethodHookParam param) {
 
       **以上被移除的配置，所表示的功能由自定义代理类代替**
 
-## 1.2.0
+### 1.2.0
 
 1. 支持Library中使用debounce-plugin 
 
-## 1.1.3
+### 1.1.3
 
 1. 适配JDK9,11,17 inDy指令解析 [#6](https://github.com/sy007/DebouncePlugin/issues/6)
 
-## 1.1.2
+### 1.1.2
 
 1. 修复checkTime配置无效问题 [#6](https://github.com/sy007/DebouncePlugin/issues/7#issuecomment-1296265701)
 
-## 1.1.1
+### 1.1.1
 
 1. 修复Lambda表达式字节码解析异常 [#6](https://github.com/sy007/DebouncePlugin/issues/6)
 2. 修复kotlin方法引用异常 [#7](https://github.com/sy007/DebouncePlugin/issues/7)
