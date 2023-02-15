@@ -189,15 +189,7 @@ object ClickMethodModifyUtil {
         add(JumpInsnNode(Opcodes.IFEQ, LabelNode(label)))
         add(InsnNode(Opcodes.RETURN))
         add(LabelNode(label))
-        add(
-            FrameNode(
-                Opcodes.F_APPEND,
-                1,
-                arrayOf(HookManager.sMethodHookParamDesc.substringBefore(";").substringAfter("L")),
-                0,
-                null
-            )
-        )
+        add(FrameNode(Opcodes.F_SAME, 0, null, 0, null))
     }
 
     private fun InsnList.createMethodHookParam(
