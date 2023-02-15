@@ -4,6 +4,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 
+
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.sunyuan.debounce.lib.BounceChecker;
 import com.sunyuan.debounce.lib.AnnotationMethodProxy;
 import com.sunyuan.debounce.lib.ClickDeBounce;
@@ -30,6 +33,18 @@ public class ClickMethodProxy {
      */
     private final BounceChecker checker = new BounceChecker();
 
+    @InterfaceMethodProxy(
+            ownerType = OnItemClickListener.class,
+            methodName = "onItemClick",
+            parameterTypes = {BaseQuickAdapter.class, View.class, int.class},
+            returnType = void.class)
+    public boolean rvOnItemClickProxy(MethodHookParam param) {
+        int pos = (int) param.args[2];
+        String uniqueId = param.owner + "|" + param.methodName + "|" + pos;
+        boolean isBounce = checker.checkAny(uniqueId, CHECK_TIME);
+        LogUtil.d("rvOnItemClickProxy=>" + "[isBounce:" + isBounce + ",checkTime:" + CHECK_TIME + "]");
+        return isBounce;
+    }
 
     /**
      * 处理{@link View.OnClickListener#onClick(View)}点击事件防抖

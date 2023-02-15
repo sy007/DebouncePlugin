@@ -2,8 +2,6 @@ package com.example.gradleplugin;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 
@@ -71,6 +69,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
                 LogUtil.d("忽略点击防抖");
+            }
+        });
+
+        findViewById(R.id.btn_rv).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, RecyclerViewActivity.class);
+                startActivity(intent);
             }
         });
 
