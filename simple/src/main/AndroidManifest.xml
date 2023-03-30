@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GradlePlugin">
         <activity
+            android:name=".DefaultMethodActivity"
+            android:exported="false" />
+        <activity
             android:name=".RecyclerViewActivity"
             android:exported="false" />
         <activity

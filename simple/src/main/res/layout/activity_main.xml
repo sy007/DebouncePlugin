@@ -140,17 +140,24 @@
             android:textAllCaps="false" />
 
         <Button
-            android:textAllCaps="false"
             android:id="@+id/btn_rv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="recyclerview点击防抖" />
+            android:text="recyclerview点击防抖"
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/btn_jump_to_lib"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="library中的点击防抖"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btn_jump_to_default_method"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="java8 default method测试"
             android:textAllCaps="false" />
     </LinearLayout>
 

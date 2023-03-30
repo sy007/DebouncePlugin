@@ -294,7 +294,8 @@ object ClickMethodModifyUtil {
                 Opcodes.INVOKESTATIC,
                 HookManager.sMethodHookParamDesc.substringBefore(";").substringAfter("L"),
                 "newInstance",
-                "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)${HookManager.sMethodHookParamDesc}"
+                "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)${HookManager.sMethodHookParamDesc}",
+                false
             )
         )
         add(VarInsnNode(Opcodes.ASTORE, localIndex))

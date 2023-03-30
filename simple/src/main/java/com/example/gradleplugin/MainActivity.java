@@ -87,6 +87,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
             }
         });
+
+        findViewById(R.id.btn_jump_to_default_method).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, DefaultMethodActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
 

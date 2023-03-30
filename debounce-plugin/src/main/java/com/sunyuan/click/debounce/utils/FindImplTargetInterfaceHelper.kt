@@ -21,7 +21,7 @@ class FindImplTargetInterfaceHelper {
      *
      * @param className             当前类
      * @param targetInterfaces      目标接口
-     * @param implTargetInterfaces 记录直接或间接实现目标接口的接口
+     * @param implTargetInterfaces  记录直接或间接实现目标接口的接口
      */
     fun find(
         className: String?,
@@ -40,22 +40,22 @@ class FindImplTargetInterfaceHelper {
      * 匹配目标接口，将匹配结果放入recordImplInterfaceSet中
      * @param interfaces             待检查接口
      * @param targetInterfaceSet     目标接口
-     * @param recordImplInterfaceSet 匹配结果
+     * @param implTargetInterfaces   记录直接或间接实现目标接口的接口
      */
     private fun matchTargetInterface(
         interfaces: Array<String>,
         targetInterfaceSet: Set<String>,
-        recordImplInterfaceSet: MutableSet<String>
+        implTargetInterfaces: MutableSet<String>
     ) {
-        if (interfaces.isEmpty() || targetInterfaceSet.size == recordImplInterfaceSet.size) {
+        if (interfaces.isEmpty() || targetInterfaceSet.size == implTargetInterfaces.size) {
             return
         }
         for (inter in interfaces) {
             if (targetInterfaceSet.contains(inter)) {
-                recordImplInterfaceSet.add(inter)
+                implTargetInterfaces.add(inter)
             } else {
                 val reader = getClassReader(inter) ?: return
-                matchTargetInterface(reader.interfaces, targetInterfaceSet, recordImplInterfaceSet)
+                matchTargetInterface(reader.interfaces, targetInterfaceSet, implTargetInterfaces)
             }
         }
     }

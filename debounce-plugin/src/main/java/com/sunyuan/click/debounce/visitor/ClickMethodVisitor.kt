@@ -26,9 +26,14 @@ class ClickMethodVisitor(
 
     override fun visitEnd() {
         super.visitEnd()
+        //exclude interface.class,resolving the java8 default method
+        if (isInterface()) {
+            accept(nextClassVisitor)
+            return
+        }
         implTargetInterfaces = collectImplTargetInterfaces(name)
         methods.filter {
-            !excludeMethodOfAnnotation(it.visibleAnnotations)
+            !excludeAbsMethodNode(it) || !excludeMethodOfAnnotation(it.visibleAnnotations)
         }.forEach { methodNode ->
             collectMethodOfAnnotation(methodNode)
             collectMethodOfImplInterface(methodNode)
@@ -37,6 +42,10 @@ class ClickMethodVisitor(
         ClickMethodModifyUtil.modify(this, proxyClassEntity)
         accept(nextClassVisitor)
     }
+
+
+    private fun isInterface(): Boolean =
+        access and Opcodes.ACC_INTERFACE != 0 && access and Opcodes.ACC_ABSTRACT != 0
 
 
     private fun collectMethodOfAnnotation(methodNode: MethodNode) {
@@ -55,7 +64,7 @@ class ClickMethodVisitor(
             )
         }
         if (HookManager.sClickDeBounceDesc == annotationDesc && (methodNode.localVariables.size != 2 || methodNode.localVariables.find { HookManager.sViewDesc == it.desc } == null)) {
-            throw  IllegalStateException(
+            throw IllegalStateException(
                 "$annotationDesc decorated method , method parameter must have only one [Landroid/view/View] parameter. (${
                     name.replace(
                         "/",
@@ -162,6 +171,10 @@ class ClickMethodVisitor(
             }
             return@run false
         }
+    }
+
+    private fun excludeAbsMethodNode(it: MethodNode): Boolean {
+        return it.access and Opcodes.ACC_ABSTRACT != 0
     }
 
     private fun record(
