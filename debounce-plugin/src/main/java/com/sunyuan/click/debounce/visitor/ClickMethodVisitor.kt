@@ -33,7 +33,9 @@ class ClickMethodVisitor(
         }
         implTargetInterfaces = collectImplTargetInterfaces(name)
         methods.filter {
-            !excludeAbsMethodNode(it) || !excludeMethodOfAnnotation(it.visibleAnnotations)
+            !excludeMethodOfAnnotation(it.visibleAnnotations)
+        }.filter {
+            !excludeAbsMethodNode(it)
         }.forEach { methodNode ->
             collectMethodOfAnnotation(methodNode)
             collectMethodOfImplInterface(methodNode)

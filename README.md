@@ -44,7 +44,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.0.2'
+        classpath 'io.github.sy007:debounce-plugin:2.0.3'
     }
 }
 
@@ -71,7 +71,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.0.2'
+    implementation 'io.github.sy007:debounce-lib:2.0.3'
 }
 ```
 
@@ -642,7 +642,7 @@ public boolean onClickProxy(MethodHookParam param) {
 
 ## 6.更新日志
 
-### 2.0.2
+### 2.0.3
 
 1. 修复Java8 default method 插桩异常问题 [#13](https://github.com/sy007/DebouncePlugin/issues/13)
 
