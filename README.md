@@ -44,7 +44,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.0.3'
+        classpath 'io.github.sy007:debounce-plugin:2.0.4'
     }
 }
 
@@ -71,7 +71,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.0.3'
+    implementation 'io.github.sy007:debounce-lib:2.0.4'
 }
 ```
 
@@ -641,6 +641,10 @@ public boolean onClickProxy(MethodHookParam param) {
 ```
 
 ## 6.更新日志
+
+### 2.0.4
+
+1. 修复kotlin写法的代理类插桩无效问题 [#16](https://github.com/sy007/DebouncePlugin/issues/16)
 
 ### 2.0.3
 

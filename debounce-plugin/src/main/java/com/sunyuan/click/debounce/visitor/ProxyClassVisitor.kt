@@ -4,7 +4,6 @@ import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.entity.ProxyClassEntity
 import com.sunyuan.click.debounce.entity.ProxyMethodEntity
 import com.sunyuan.click.debounce.utils.HookManager
-import com.sunyuan.click.debounce.utils.LogUtil
 import org.objectweb.asm.*
 
 /**
@@ -107,7 +106,11 @@ class InterfaceMethodProxyVisitor(
         super.visitEnd()
         val ownerType = values["ownerType"] as Type
         val methodName = values["methodName"].toString()
-        val returnType = values["returnType"] as Type
+        var returnType = values["returnType"] as Type
+        //兼容kotlin写法的代理类
+        if ("Lkotlin/Unit;" == returnType.descriptor) {
+            returnType = Type.VOID_TYPE
+        }
         val parametersType = values["parameterTypes"] as List<Type>
         val methodDesc = Type.getMethodDescriptor(
             returnType,
