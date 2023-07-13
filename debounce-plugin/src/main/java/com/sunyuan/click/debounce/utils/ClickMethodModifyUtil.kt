@@ -2,6 +2,7 @@
 
 package com.sunyuan.click.debounce.utils
 
+import com.sunyuan.click.debounce.config.Const
 import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.entity.MethodMapperEntity
 import com.sunyuan.click.debounce.entity.ProxyClassEntity
@@ -23,7 +24,7 @@ object ClickMethodModifyUtil {
     var fieldDesc = ""
 
     fun modify(classNode: ClassNode, proxyClassEntity: ProxyClassEntity) {
-        val collectMethods = HookManager.sModifyOfMethods[classNode.name]
+        val collectMethods = Const.sModifyOfMethods[classNode.name]
         if (collectMethods.isNullOrEmpty()) {
             return
         }
@@ -292,9 +293,9 @@ object ClickMethodModifyUtil {
         add(
             MethodInsnNode(
                 Opcodes.INVOKESTATIC,
-                HookManager.sMethodHookParamDesc.substringBefore(";").substringAfter("L"),
+                Const.sMethodHookParamDesc.substringBefore(";").substringAfter("L"),
                 "newInstance",
-                "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)${HookManager.sMethodHookParamDesc}",
+                "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)${Const.sMethodHookParamDesc}",
                 false
             )
         )

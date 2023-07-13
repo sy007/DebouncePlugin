@@ -1,3 +1,4 @@
+import com.sunyuan.click.debounce.config.Const
 import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.entity.MethodMapperEntity
 import com.sunyuan.click.debounce.entity.ProxyClassEntity
@@ -13,16 +14,19 @@ import java.util.concurrent.ConcurrentHashMap
  *    author : Six
  *    date   : 2020/11/29
  *    desc   : 收集需要hook的方法信息，包含普通方法和Lambda方法
- *    version: 1.0
  */
 class ClickMethodVisitor(
-    private val proxyClassEntity: ProxyClassEntity,
+    api: Int,
     private val nextClassVisitor: ClassVisitor,
-    private val hookMethodEntities: MutableSet<MethodEntity>,
-    private val excludeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean,
-    private val collectImplTargetInterfaces: (name: String) -> Set<String>
-) : ClassNode(Opcodes.ASM7) {
-    private lateinit var implTargetInterfaces: Set<String>
+    private val proxyClassEntity: ProxyClassEntity,
+    private val excludeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean
+) : ClassNode(api) {
+
+    private val implTargetInterfaces = mutableSetOf<String>()
+    private val hookMethodEntities = proxyClassEntity.methodIndex.keys.toMutableSet()
+    private val hookInterface = proxyClassEntity.methodIndex.keys.map {
+        it.owner
+    }.toMutableSet()
 
     override fun visitEnd() {
         super.visitEnd()
@@ -31,7 +35,13 @@ class ClickMethodVisitor(
             accept(nextClassVisitor)
             return
         }
-        implTargetInterfaces = collectImplTargetInterfaces(name)
+
+        InterfaceFinderUtil.find(
+            name,
+            hookInterface,
+            implTargetInterfaces
+        )
+
         methods.filter {
             !excludeMethodOfAnnotation(it.visibleAnnotations)
         }.filter {
@@ -65,7 +75,7 @@ class ClickMethodVisitor(
                 }.${methodNode.name + methodNode.desc})"
             )
         }
-        if (HookManager.sClickDeBounceDesc == annotationDesc && (methodNode.localVariables.size != 2 || methodNode.localVariables.find { HookManager.sViewDesc == it.desc } == null)) {
+        if (Const.sClickDeBounceDesc == annotationDesc && (methodNode.localVariables.size != 2 || methodNode.localVariables.find { Const.sViewDesc == it.desc } == null)) {
             throw IllegalStateException(
                 "$annotationDesc decorated method , method parameter must have only one [Landroid/view/View] parameter. (${
                     name.replace(
@@ -156,7 +166,7 @@ class ClickMethodVisitor(
     private fun includeMethodOfAnnotation(annotationNodes: List<AnnotationNode>?): String? {
         return kotlin.run {
             annotationNodes?.forEach {
-                if (HookManager.sProxyClassEntity?.annotationIndex?.containsKey(it.desc) == true) {
+                if (proxyClassEntity.annotationIndex.containsKey(it.desc)) {
                     return@run it.desc
                 }
             }
@@ -183,10 +193,10 @@ class ClickMethodVisitor(
         name: String,
         mapperEntity: MethodMapperEntity,
     ) {
-        var methodEntities = HookManager.sModifyOfMethods[name]
+        var methodEntities = Const.sModifyOfMethods[name]
         if (methodEntities == null) {
             methodEntities = ConcurrentHashMap()
-            HookManager.sModifyOfMethods[name] = methodEntities
+            Const.sModifyOfMethods[name] = methodEntities
         }
         methodEntities[mapperEntity.methodEntity.nameWithDesc()] = mapperEntity
     }

@@ -1,6 +1,7 @@
 package com.sunyuan.click.debounce.utils
 
 import com.didiglobal.booster.kotlinx.touch
+import com.sunyuan.click.debounce.config.Const
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -10,7 +11,7 @@ import java.util.*
  * @date 2022/08/21
  * @description 参考:https://github.com/MRwangqi/pluginDemo/blob/master/plugin/checkPlugin/src/main/java/com/codelang/plugin/html/IndexHtml.kt
  */
-class HtmlReport {
+class HtmlReportUtil {
 
     companion object {
         private const val TITLE = "debounce-transform-report"
@@ -24,9 +25,9 @@ class HtmlReport {
 
     fun dump(file: File) {
         val sb = StringBuffer()
-        val classesCount = HookManager.sModifyOfMethods.keys.size
+        val classesCount = Const.sModifyOfMethods.keys.size
         var methodCount = 0
-        HookManager.sModifyOfMethods.forEach { entry ->
+        Const.sModifyOfMethods.forEach { entry ->
             methodCount += entry.value.size
             sb.append(generatorPre(entry.key, entry.value.keys))
         }
@@ -37,7 +38,7 @@ class HtmlReport {
             )
         )
         file.touch().writeText(getHtml())
-        HookManager.sModifyOfMethods.clear()
+        Const.sModifyOfMethods.clear()
         LogUtil.warn("--------------------------------------------------------")
         LogUtil.warn("$TITLE:${file.absolutePath}")
         LogUtil.warn("--------------------------------------------------------")

@@ -1,14 +1,23 @@
 buildscript {
     ext.kotlin_version = "1.7.10"
     repositories {
+        // 阿里云 Maven 仓库镜像
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        // 阿里云 Google Maven 仓库镜像
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        // 阿里云 JCenter 仓库镜像
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        //阿里云 gradlePluginPortal 仓库镜像
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
         google()
         mavenCentral()
+        gradlePluginPortal()
         maven {
             url("https://s01.oss.sonatype.org/content/repositories/snapshots")
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.vanniktech:gradle-maven-publish-plugin:0.18.0'
     }
@@ -19,8 +28,17 @@ apply plugin: 'java-gradle-plugin'
 apply plugin: "com.vanniktech.maven.publish"
 
 repositories {
-    mavenCentral()
+    // 阿里云 Maven 仓库镜像
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    // 阿里云 Google Maven 仓库镜像
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    // 阿里云 JCenter 仓库镜像
+    maven { url 'https://maven.aliyun.com/repository/jcenter' }
+    //阿里云 gradlePluginPortal 仓库镜像
+    maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
     google()
+    mavenCentral()
+    gradlePluginPortal()
     maven {
         url("https://s01.oss.sonatype.org/content/repositories/snapshots")
     }
@@ -39,15 +57,24 @@ gradlePlugin {
     }
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+gradlePlugin {
+    plugins {
+        version {
+            id = 'debounce-plugin'
+            implementationClass = 'com.sunyuan.click.debounce.DebouncePlugin'
+        }
+    }
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 compileKotlin {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 compileTestKotlin {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 dependencies {
@@ -58,7 +85,8 @@ dependencies {
     implementation 'org.ow2.asm:asm:7.3.1'
     implementation 'org.ow2.asm:asm-util:7.3.1'
     implementation 'org.ow2.asm:asm-commons:7.3.1'
-    implementation 'com.android.tools.build:gradle:7.2.2'
+    compileOnly 'com.android.tools.build:gradle:7.4.2'
+    implementation 'com.android.tools:sdklib:26.0.0'
     implementation "org.apache.commons:commons-compress:1.21"
     implementation "com.didiglobal.booster:booster-kotlinx:4.6.0"
 }

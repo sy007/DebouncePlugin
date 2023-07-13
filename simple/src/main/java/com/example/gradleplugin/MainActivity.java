@@ -7,6 +7,7 @@ import android.widget.CheckBox;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.gradleplugin.excludes.ExcludeActivity;
 import com.sunyuan.debounce.lib.ClickDeBounce;
 import com.sunyuan.debounce.lib.IgnoreClickDeBounce;
 import com.sunyuan.simple.lib.LibraryActivity;
@@ -92,6 +93,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, DefaultMethodActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        findViewById(R.id.btn_jump_to_excludes).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ExcludeActivity.class);
                 startActivity(intent);
             }
         });

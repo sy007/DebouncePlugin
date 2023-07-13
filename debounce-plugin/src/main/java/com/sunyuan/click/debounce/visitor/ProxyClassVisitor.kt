@@ -1,9 +1,9 @@
 package com.sunyuan.click.debounce.visitor
 
+import com.sunyuan.click.debounce.config.Const
 import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.entity.ProxyClassEntity
 import com.sunyuan.click.debounce.entity.ProxyMethodEntity
-import com.sunyuan.click.debounce.utils.HookManager
 import org.objectweb.asm.*
 
 /**
@@ -11,8 +11,9 @@ import org.objectweb.asm.*
  * @date 2023/01/30
  * @description
  */
-class ProxyClassVisitor : ClassVisitor(Opcodes.ASM7) {
-    private lateinit var proxyClassEntity: ProxyClassEntity
+class ProxyClassVisitor(api: Int, private val proxyClassEntity: ProxyClassEntity) :
+    ClassVisitor(api) {
+
     override fun visit(
         version: Int,
         access: Int,
@@ -21,9 +22,8 @@ class ProxyClassVisitor : ClassVisitor(Opcodes.ASM7) {
         superName: String?,
         interfaces: Array<out String>?
     ) {
-        super.visit(version, access, name, signature, superName, interfaces)
-        proxyClassEntity = ProxyClassEntity()
         proxyClassEntity.owner = name
+        super.visit(version, access, name, signature, superName, interfaces)
     }
 
     override fun visitMethod(
@@ -39,36 +39,31 @@ class ProxyClassVisitor : ClassVisitor(Opcodes.ASM7) {
             return super.visitMethod(access, name, descriptor, signature, exceptions)
         }
         val argumentTypes: Array<Type> = Type.getArgumentTypes(descriptor)
-        if (argumentTypes.isEmpty() || argumentTypes.first().descriptor != HookManager.sMethodHookParamDesc) {
+        if (argumentTypes.isEmpty() || argumentTypes.first().descriptor != Const.sMethodHookParamDesc) {
             return super.visitMethod(access, name, descriptor, signature, exceptions)
         }
         val proxyMethodEntity = ProxyMethodEntity().apply {
             methodName = name
             methodDesc = descriptor
         }
-        return ProxyMethodVisitor(proxyClassEntity, proxyMethodEntity)
-    }
-
-    override fun visitEnd() {
-        super.visitEnd()
-        proxyClassEntity.print()
-        HookManager.sProxyClassEntity = proxyClassEntity
+        return ProxyMethodVisitor(api, proxyClassEntity, proxyMethodEntity)
     }
 }
 
 class ProxyMethodVisitor(
+    api: Int,
     private val proxyClassEntity: ProxyClassEntity,
     private val proxyMethodEntity: ProxyMethodEntity
-) :
-    MethodVisitor(Opcodes.ASM7) {
+) : MethodVisitor(api) {
 
     override fun visitAnnotation(descriptor: String?, visible: Boolean): AnnotationVisitor? {
         return when (descriptor) {
-            HookManager.sInterfaceMethodProxyDesc -> {
-                InterfaceMethodProxyVisitor(proxyClassEntity, proxyMethodEntity)
+            Const.sInterfaceMethodProxyDesc -> {
+                InterfaceMethodProxyVisitor(api, proxyClassEntity, proxyMethodEntity)
             }
-            HookManager.sAnnotationMethodProxyDesc -> {
+            Const.sAnnotationMethodProxyDesc -> {
                 AnnotationMethodProxyVisitor(
+                    api,
                     proxyClassEntity,
                     proxyMethodEntity
                 )
@@ -79,15 +74,16 @@ class ProxyMethodVisitor(
 }
 
 class InterfaceMethodProxyVisitor(
+    api: Int,
     private val proxyClassEntity: ProxyClassEntity,
     private val proxyMethodEntity: ProxyMethodEntity
 ) :
-    AnnotationVisitor(Opcodes.ASM7) {
+    AnnotationVisitor(api) {
     private val values: MutableMap<String, Any> = mutableMapOf()
 
     override fun visit(name: String, value: Any) {
-        super.visit(name, value)
         values[name] = value
+        super.visit(name, value)
     }
 
     override fun visitArray(name: String): AnnotationVisitor {
@@ -103,7 +99,6 @@ class InterfaceMethodProxyVisitor(
     }
 
     override fun visitEnd() {
-        super.visitEnd()
         val ownerType = values["ownerType"] as Type
         val methodName = values["methodName"].toString()
         var returnType = values["returnType"] as Type
@@ -122,22 +117,24 @@ class InterfaceMethodProxyVisitor(
             this.methodName = methodName
             this.methodDesc = methodDesc
         }] = proxyMethodEntity
+        super.visitEnd()
     }
 }
 
 class AnnotationMethodProxyVisitor(
+    api: Int,
     private val proxyClassEntity: ProxyClassEntity,
     private val proxyMethodEntity: ProxyMethodEntity
-) : AnnotationVisitor(Opcodes.ASM7) {
+) : AnnotationVisitor(api) {
     private val values: MutableMap<String, Any> = mutableMapOf()
     override fun visit(name: String, value: Any) {
-        super.visit(name, value)
         values[name] = value
+        super.visit(name, value)
     }
 
     override fun visitEnd() {
-        super.visitEnd()
         val typeDescriptor = (values["type"] as Type).descriptor
         proxyClassEntity.annotationIndex[typeDescriptor] = proxyMethodEntity
+        super.visitEnd()
     }
 }

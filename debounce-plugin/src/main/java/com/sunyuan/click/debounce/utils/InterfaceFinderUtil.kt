@@ -8,7 +8,19 @@ import org.objectweb.asm.ClassReader
  * desc   :
  * version: 1.0
  */
-class FindImplTargetInterfaceHelper {
+object InterfaceFinderUtil {
+
+    private const val OBJECT = "java/lang/Object"
+
+    /**
+     * 检查当前类是 Object 类型
+     *
+     * @param className class name
+     * @return checked result
+     */
+    private fun isObject(className: String): Boolean {
+        return OBJECT == className
+    }
 
     private lateinit var classLoader: ClassLoader
 
@@ -65,20 +77,6 @@ class FindImplTargetInterfaceHelper {
             it.readBytes()
         }?.run {
             ClassReader(this)
-        }
-    }
-
-    companion object {
-        private const val OBJECT = "java/lang/Object"
-
-        /**
-         * 检查当前类是 Object 类型
-         *
-         * @param className class name
-         * @return checked result
-         */
-        private fun isObject(className: String): Boolean {
-            return OBJECT == className
         }
     }
 }

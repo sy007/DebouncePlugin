@@ -1,5 +1,6 @@
 package com.sunyuan.click.debounce.entity
 
+import org.gradle.api.tasks.Input
 import java.io.Serializable
 
 /**

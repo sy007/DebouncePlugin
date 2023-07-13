@@ -1,11 +1,9 @@
-package com.sunyuan.click.debounce.utils
+package com.sunyuan.click.debounce.extensions
 
 import com.didiglobal.booster.kotlinx.NCPU
 import com.didiglobal.booster.kotlinx.redirect
 import com.didiglobal.booster.kotlinx.search
 import com.didiglobal.booster.kotlinx.touch
-import org.apache.commons.compress.archivers.ArchiveEntry
-import org.apache.commons.compress.archivers.ArchiveStreamFactory
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry
 import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -15,12 +13,18 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.jar.JarFile
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 
+/**
+ * Transform this file or directory to the output by the specified transformer
+ *
+ * @param output The output location
+ * @param transformer The byte data transformer
+ * @description 参考:Booster
+ */
 /**
  * Transform this file or directory to the output by the specified transformer
  *
@@ -149,6 +153,6 @@ fun ZipInputStream.transform(
 
 private val JAR_SIGNATURE_EXTENSIONS = setOf("SF", "RSA", "DSA", "EC")
 
-private fun isJarSignatureRelatedFiles(name: String): Boolean {
+fun isJarSignatureRelatedFiles(name: String): Boolean {
     return name.startsWith("META-INF/") && name.substringAfterLast('.') in JAR_SIGNATURE_EXTENSIONS
 }

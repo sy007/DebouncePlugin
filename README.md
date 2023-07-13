@@ -4,36 +4,28 @@ Android点击事件防抖动插件，主要为了解决项目以及第三方库�
 
 ## 1.支持以下功能：
 
-1. 支持application ,library 中使用
-
-2. 支持Java,Kotlin点击事件防抖
-
-3. 支持Java,Kotlin Lambda点击事件防抖
-
-4. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
-
-5. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
-
+1. 支持AGP8.0
+2. 支持application ,library 中使用
+3. 支持Java,Kotlin点击事件防抖
+4. 支持Java,Kotlin Lambda点击事件防抖
+5. 支持排除或处理指定路径下的代码防抖处理**(文件级黑白名单)**，就跟写gitignore一样简单
+6. 支持排除或处理指定方法防抖处理**(方法级黑白名单)**，两个注解解决你的问题
 7. 支持多种类型的点击事件处理。例如：
    - ListView#onItemClick
    - ListView#onItemSelected
    - ExpandableListView#onGroupClick
    - ExpandableListView#onChildClick
    - ...只要你想处理，都支持。
-   
-7. 支持xml设置的点击事件防抖
-
-8. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
-
-9. 支持自定义防抖处理
+8. 支持xml设置的点击事件防抖
+9. 支持ButterKnife,XUtils等三方APT设置的点击事件防抖
+10. 支持自定义防抖处理
 
    1. 一段时间内，只允许触发一次点击事件，时间多久你说了算
 
    2. 可以每个点击事件防抖状态唯一，也可以全局共享一个防抖状态
    3. 支持运行时二次拦截处理
    4. 甚至可以做到全局点击事件埋点
-
-10. 代码修改透明(插件对代码的修改会生成一个html报告)
+11. 代码修改透明(插件对代码的修改会生成一个html报告)
 
 ## 2.如何使用
 
@@ -44,7 +36,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.0.4'
+        classpath 'io.github.sy007:debounce-plugin:2.1.2'
     }
 }
 
@@ -71,7 +63,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.0.4'
+    implementation 'io.github.sy007:debounce-lib:2.1.2'
 }
 ```
 
@@ -641,6 +633,10 @@ public boolean onClickProxy(MethodHookParam param) {
 ```
 
 ## 6.更新日志
+
+### 2.1.2
+
+1. 支持APG8.0 [#19](https://github.com/sy007/DebouncePlugin/issues/19)
 
 ### 2.0.4
 

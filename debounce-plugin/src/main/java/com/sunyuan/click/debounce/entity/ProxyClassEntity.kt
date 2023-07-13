@@ -4,6 +4,8 @@ import com.sunyuan.click.debounce.utils.LogUtil
 import groovy.json.DefaultJsonGenerator
 import groovy.json.JsonBuilder
 import groovy.json.JsonGenerator
+import org.gradle.api.tasks.Input
+import java.io.Serializable
 
 
 /**
@@ -11,7 +13,7 @@ import groovy.json.JsonGenerator
  * @date 2023/01/31
  * @description
  */
-class ProxyClassEntity {
+class ProxyClassEntity : Serializable {
 
     fun print() {
         LogUtil.warn("------------------proxy class config info--------------------")
@@ -33,7 +35,9 @@ class ProxyClassEntity {
     }
 
     var owner: String = ""
+
     val methodIndex: MutableMap<MethodEntity, ProxyMethodEntity> = mutableMapOf()
+
     val annotationIndex: MutableMap<String, ProxyMethodEntity> = mutableMapOf()
 
     fun findProxyMethodEntity(samMethodEntity: MethodEntity): ProxyMethodEntity? {
@@ -44,7 +48,8 @@ class ProxyClassEntity {
     }
 }
 
-class ProxyMethodEntity {
+class ProxyMethodEntity : Serializable {
     var methodName: String = ""
+
     var methodDesc: String = ""
 }
