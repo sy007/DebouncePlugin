@@ -36,7 +36,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.1.2'
+        classpath 'io.github.sy007:debounce-plugin:2.1.3'
     }
 }
 
@@ -63,7 +63,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.1.2'
+    implementation 'io.github.sy007:debounce-lib:2.1.3'
 }
 ```
 
@@ -633,6 +633,10 @@ public boolean onClickProxy(MethodHookParam param) {
 ```
 
 ## 6.更新日志
+
+### 2.1.3
+
+1. 修复Unsupported api xxx问题[#20](https://github.com/sy007/DebouncePlugin/issues/20)
 
 ### 2.1.2
 
