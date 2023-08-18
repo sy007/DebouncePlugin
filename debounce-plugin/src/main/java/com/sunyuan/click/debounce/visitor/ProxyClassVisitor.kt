@@ -11,8 +11,8 @@ import org.objectweb.asm.*
  * @date 2023/01/30
  * @description
  */
-class ProxyClassVisitor(api: Int, private val proxyClassEntity: ProxyClassEntity) :
-    ClassVisitor(api) {
+class ProxyClassVisitor(private val proxyClassEntity: ProxyClassEntity) :
+    ClassVisitor(Const.ASM_API) {
 
     override fun visit(
         version: Int,
@@ -61,6 +61,7 @@ class ProxyMethodVisitor(
             Const.sInterfaceMethodProxyDesc -> {
                 InterfaceMethodProxyVisitor(api, proxyClassEntity, proxyMethodEntity)
             }
+
             Const.sAnnotationMethodProxyDesc -> {
                 AnnotationMethodProxyVisitor(
                     api,
@@ -68,6 +69,7 @@ class ProxyMethodVisitor(
                     proxyMethodEntity
                 )
             }
+
             else -> super.visitAnnotation(descriptor, visible)
         }
     }

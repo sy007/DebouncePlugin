@@ -1,11 +1,6 @@
 package com.sunyuan.click.debounce.config
 
-import com.sunyuan.click.debounce.entity.MethodEntity
 import com.sunyuan.click.debounce.entity.MethodMapperEntity
-import com.sunyuan.click.debounce.entity.ProxyClassEntity
-import com.sunyuan.click.debounce.utils.LogUtil
-import com.sunyuan.click.debounce.visitor.ProxyClassVisitor
-import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -17,6 +12,7 @@ import java.util.concurrent.ConcurrentMap
  * version: 1.0
  */
 object Const {
+    const val ASM_API = Opcodes.ASM7
     const val sMethodHookParamDesc = "Lcom/sunyuan/debounce/lib/MethodHookParam;"
     const val sClickDeBounceDesc = "Lcom/sunyuan/debounce/lib/ClickDeBounce;"
     const val sIgnoreClickDeBounceDesc = "Lcom/sunyuan/debounce/lib/IgnoreClickDeBounce;"

@@ -2,15 +2,9 @@ package com.sunyuan.click.debounce.task
 
 import ClickMethodVisitor
 import com.android.build.gradle.BaseExtension
-import com.didiglobal.booster.kotlinx.NCPU
-import com.didiglobal.booster.kotlinx.redirect
-import com.didiglobal.booster.kotlinx.search
 import com.sunyuan.click.debounce.entity.ProxyClassEntity
 import com.sunyuan.click.debounce.extensions.isJarSignatureRelatedFiles
-import com.sunyuan.click.debounce.extensions.transform
 import com.sunyuan.click.debounce.utils.*
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry
-import org.apache.commons.compress.archivers.zip.ParallelScatterZipCreator
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.ListProperty
@@ -21,13 +15,9 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.OutputFile
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -88,6 +78,7 @@ abstract class ModifyClassesTask : DefaultTask() {
                                 jarFile.getInputStream(jarEntry).readBytes()
                             }
                         }
+
                         else -> jarFile.getInputStream(jarEntry).readBytes()
                     }
                     jarOutput.write(bytes)
@@ -112,6 +103,7 @@ abstract class ModifyClassesTask : DefaultTask() {
                                 file.readBytes()
                             }
                         }
+
                         else -> {
                             file.readBytes()
                         }
@@ -138,7 +130,7 @@ abstract class ModifyClassesTask : DefaultTask() {
         val cr = ClassReader(bytes)
         val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
         val clickClassVisitor =
-            ClickMethodVisitor(Opcodes.ASM7, cw, entity, excludeMethodOfAnnotation = {
+            ClickMethodVisitor(cw, entity, excludeMethodOfAnnotation = {
                 project.debounceEx.excludeForMethodAnnotation.get().contains(it.desc)
             })
         cr.accept(clickClassVisitor, 0)

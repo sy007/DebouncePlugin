@@ -109,6 +109,7 @@ open class DebounceTransform(
                             outputProvider,
                             isIncremental
                         )
+
                         is JarInput -> transformJar(input, outputProvider, isIncremental)
                     }
                 })
@@ -148,6 +149,7 @@ open class DebounceTransform(
                             ?.forEach { it.delete() }
                         file.delete()
                     }
+
                     Status.ADDED, Status.CHANGED -> {
                         val outputDir = outputProvider.getContentLocation(
                             dirInput.file.absolutePath,
@@ -163,6 +165,7 @@ open class DebounceTransform(
                             transform(canonicalName, byteArray)
                         }
                     }
+
                     else -> {
 
                     }
@@ -201,9 +204,11 @@ open class DebounceTransform(
                         transform(canonicalName, byteArray)
                     }
                 }
+
                 Status.REMOVED -> {
                     outputJar.delete()
                 }
+
                 else -> {
 
                 }
@@ -220,7 +225,7 @@ open class DebounceTransform(
         if (PathMatcherUtil.matchClassPath(canonicalName)) {
             val cr = ClassReader(bytes)
             val cw = ClassWriter(ClassWriter.COMPUTE_MAXS)
-            val clickClassVisitor = ClickMethodVisitor(Opcodes.ASM7, cw,
+            val clickClassVisitor = ClickMethodVisitor(cw,
                 proxyClassEntity,
                 excludeMethodOfAnnotation = {
                     debounceEx.excludeForMethodAnnotation.get().contains(it.desc)

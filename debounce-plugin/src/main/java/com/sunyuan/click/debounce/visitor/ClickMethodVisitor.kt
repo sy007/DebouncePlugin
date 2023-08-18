@@ -16,11 +16,10 @@ import java.util.concurrent.ConcurrentHashMap
  *    desc   : 收集需要hook的方法信息，包含普通方法和Lambda方法
  */
 class ClickMethodVisitor(
-    api: Int,
     private val nextClassVisitor: ClassVisitor,
     private val proxyClassEntity: ProxyClassEntity,
     private val excludeMethodOfAnnotation: (annotationNode: AnnotationNode) -> Boolean
-) : ClassNode(api) {
+) : ClassNode(Const.ASM_API) {
 
     private val implTargetInterfaces = mutableSetOf<String>()
     private val hookMethodEntities = proxyClassEntity.methodIndex.keys.toMutableSet()
