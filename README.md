@@ -36,7 +36,7 @@ buildscript {
     ...
     dependencies {
         //依赖插件所需的环境
-        classpath 'io.github.sy007:debounce-plugin:2.1.3'
+        classpath 'io.github.sy007:debounce-plugin:2.1.5'
     }
 }
 
@@ -63,7 +63,7 @@ debounce {
 }
 dependencies {
     //插件所需的依赖库
-    implementation 'io.github.sy007:debounce-lib:2.1.3'
+    implementation 'io.github.sy007:debounce-lib:2.1.5'
 }
 ```
 
