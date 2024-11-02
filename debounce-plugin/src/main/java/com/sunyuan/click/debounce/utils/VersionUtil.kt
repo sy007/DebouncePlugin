@@ -14,6 +14,6 @@ object VersionUtil {
     }
     val V7_4: Boolean by lazy {
         LogUtil.warn("current AGP version => ${version.toShortString()}")
-        version.major >= 7 || version.major >= 7 && version.minor >= 4
+        version.major > 7 || version.major >= 7 && version.minor >= 4
     }
 }
