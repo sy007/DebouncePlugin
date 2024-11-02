@@ -634,6 +634,10 @@ public boolean onClickProxy(MethodHookParam param) {
 
 ## 6.更新日志
 
+### 2.1.5
+
+1. 修复Gradle版本判断错误问题[#25](https://github.com/sy007/DebouncePlugin/issues/25)
+
 ### 2.1.3
 
 1. 修复Unsupported api xxx问题[#20](https://github.com/sy007/DebouncePlugin/issues/20)
